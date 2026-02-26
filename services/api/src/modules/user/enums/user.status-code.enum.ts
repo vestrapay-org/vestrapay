@@ -1,0 +1,16 @@
+export enum EnumUserStatus_CODE_ERROR {
+    notFound = 5150,
+    emailExist = 5152,
+    usernameExist = 5153,
+    statusInvalid = 5155,
+    inactiveForbidden = 5157,
+    deletedForbidden = 5158,
+    blockedForbidden = 5159,
+    passwordNotMatch = 5160,
+    passwordExpired = 5162,
+    passwordAttemptMax = 5163,
+    usernameNotAllowed = 5165,
+    usernameContainBadWord = 5166,
+    emailNotVerified = 5167,
+    passwordNotSet = 5169,
+}

@@ -1,0 +1,41 @@
+# Build stage base
+FROM node:lts-alpine AS base
+LABEL maintainer="dev@vestrapay.io"
+ARG NODE_ENV
+ENV NODE_ENV=${NODE_ENV}
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /app
+
+# Stage to install all dependencies and build the app
+FROM base AS builder
+COPY package.json pnpm-lock.yaml ./
+RUN set -x && pnpm install --frozen-lockfile --ignore-scripts
+
+COPY . .
+
+RUN pnpm db:generate
+RUN pnpm build
+
+# Main Stage
+FROM base AS main
+COPY package.json pnpm-lock.yaml ./
+RUN set -x && pnpm install --frozen-lockfile --prod --ignore-scripts
+
+# Copy only necessary files from previous stages
+COPY --from=builder /app/generated/prisma-client ./generated/prisma-client
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
+
+# Create non-root user for security
+RUN addgroup -S ec2-user && adduser -S ec2-user -G ec2-user && \
+    chown -R ec2-user:ec2-user /app
+USER ec2-user
+
+RUN touch .env
+EXPOSE 3000
+
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/docs
+
+CMD ["pnpm", "start:prod"]

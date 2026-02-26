@@ -1,0 +1,15 @@
+import { Module } from '@nestjs/common';
+import { UserService } from '@modules/user/services/user.service';
+import { UserUtil } from '@modules/user/utils/user.util';
+import { UserRepository } from '@modules/user/repositories/user.repository';
+import { RoleModule } from '@modules/role/role.module';
+import { SessionModule } from '@modules/session/session.module';
+import { EmailModule } from '@modules/email/email.module';
+
+@Module({
+    imports: [RoleModule, SessionModule, EmailModule],
+    exports: [UserService, UserUtil, UserRepository],
+    providers: [UserService, UserUtil, UserRepository],
+    controllers: [],
+})
+export class UserModule {}
