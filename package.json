@@ -1,0 +1,37 @@
+{
+  "name": "vestrapay",
+  "private": true,
+  "scripts": {
+    "build": "turbo run build",
+    "build:web": "turbo run build --filter=@vestrapay/web",
+    "build:app": "turbo run build --filter=@vestrapay/app",
+    "build:admin": "turbo run build --filter=@vestrapay/admin",
+    "build:checkout": "turbo run build --filter=@vestrapay/checkout",
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@vestrapay/web",
+    "dev:app": "turbo run dev --filter=@vestrapay/app",
+    "dev:admin": "turbo run dev --filter=@vestrapay/admin",
+    "dev:checkout": "turbo run dev --filter=@vestrapay/checkout",
+    "lint": "turbo run lint",
+    "lint:web": "turbo run lint --filter=@vestrapay/web",
+    "lint:app": "turbo run lint --filter=@vestrapay/app",
+    "lint:admin": "turbo run lint --filter=@vestrapay/admin",
+    "lint:checkout": "turbo run lint --filter=@vestrapay/checkout",
+    "lint:ui": "turbo run lint --filter=@vestrapay/ui",
+    "type-check": "turbo run type-check",
+    "type-check:web": "turbo run type-check --filter=@vestrapay/web",
+    "type-check:app": "turbo run type-check --filter=@vestrapay/app",
+    "type-check:admin": "turbo run type-check --filter=@vestrapay/admin",
+    "type-check:checkout": "turbo run type-check --filter=@vestrapay/checkout",
+    "clean": "turbo run clean",
+    "clean:workspaces": "turbo run clean && rm -rf node_modules .turbo",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,md,json,css}\""
+  },
+  "packageManager": "pnpm@10.19.0",
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "turbo": "^2.8.11"
+  }
+}
