@@ -30,7 +30,8 @@ vestrapay/
 │   ├── ui/             # Shared UI components (shadcn/ui, Tailwind theme)
 │   ├── typescript-config/  # Shared tsconfig presets
 │   └── eslint-config/      # Shared ESLint configurations
-├── services/           # Backend services
+├── services/
+│   └── api/           # Backend API (NestJS, PostgreSQL)
 ├── turbo.json          # Turborepo task pipeline
 ├── pnpm-workspace.yaml # Workspace definitions
 └── package.json        # Root scripts & devDependencies
@@ -55,7 +56,9 @@ vestrapay/
 
 ### Services
 
-The `services/` directory is reserved for backend microservices (e.g. NestJS). It is already registered as a pnpm workspace.
+| Service        | Package Name     | Purpose                          |
+| -------------- | ---------------- | -------------------------------- |
+| `services/api` | `@vestrapay/api` | Backend API (NestJS, PostgreSQL) |
 
 ## Prerequisites
 
@@ -112,6 +115,8 @@ All commands are run from the monorepo root.
 | `pnpm lint:admin`     | Lint `@vestrapay/admin`              |
 | `pnpm lint:checkout`  | Lint `@vestrapay/checkout`           |
 | `pnpm lint:ui`        | Lint `@vestrapay/ui`                 |
+| `pnpm dev:api`        | Dev server for `@vestrapay/api`      |
+| `pnpm build:api`      | Build `@vestrapay/api`               |
 
 You can also run any Turbo filter manually:
 

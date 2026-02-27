@@ -1,0 +1,11 @@
+export enum EnumAuthStatusCodeError {
+    jwtAccessTokenInvalid = 5120,
+    jwtRefreshTokenInvalid = 5121,
+    twoFactorInvalid = 5126,
+    twoFactorChallengeInvalid = 5127,
+    twoFactorNotEnabled = 5128,
+    twoFactorAlreadyEnabled = 5129,
+    twoFactorRequiredSetup = 5132,
+    twoFactorNotRequiredSetup = 5133,
+    twoFactorAttemptTemporaryLock = 5134,
+}

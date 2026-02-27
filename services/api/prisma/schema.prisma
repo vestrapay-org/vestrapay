@@ -1,0 +1,219 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma-client"
+}
+
+// ─── API Keys ────────────────────────────────────────────────────────────────
+
+model ApiKey {
+  id       String         @id @default(uuid()) @db.Uuid
+  type     EnumApiKeyType @default(default)
+  name     String
+  key      String
+  hash     String
+  isActive Boolean        @default(true)
+  startAt  DateTime?
+  endAt    DateTime?
+
+  createdAt DateTime @default(now())
+  createdBy String?  @db.Uuid
+  updatedAt DateTime @updatedAt
+  updatedBy String?  @db.Uuid
+
+  @@unique([key])
+  @@index([name, isActive, type, createdAt])
+  @@index([createdAt])
+  @@map("api_keys")
+}
+
+// ─── Roles & Abilities ───────────────────────────────────────────────────────
+
+model Role {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  type        EnumRoleType @default(user)
+
+  createdAt DateTime @default(now())
+  createdBy String?  @db.Uuid
+  updatedAt DateTime @updatedAt
+  updatedBy String?  @db.Uuid
+
+  abilities RoleAbility[] @relation("RoleAbilities")
+  users     User[]        @relation("UserRole")
+
+  @@unique([name])
+  @@index([name, type, createdAt])
+  @@index([createdAt])
+  @@map("roles")
+}
+
+model RoleAbility {
+  id      String   @id @default(uuid()) @db.Uuid
+  roleId  String   @db.Uuid
+  action  String[]
+  subject String
+
+  role Role @relation("RoleAbilities", fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@index([roleId])
+  @@map("role_abilities")
+}
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+model User {
+  id              String             @id @default(uuid()) @db.Uuid
+  name            String?
+  username        String
+  isVerified      Boolean            @default(false)
+  verifiedAt      DateTime?
+  email           String
+  roleId          String             @db.Uuid
+  password        String?
+  passwordExpired DateTime?
+  passwordCreated DateTime?
+  passwordAttempt Int?
+  signUpAt        DateTime           @default(now())
+  signUpFrom      EnumUserSignUpFrom
+  status          EnumUserStatus     @default(active)
+  gender          EnumUserGender?
+  photoUrl        String?
+  lastLoginAt     DateTime?
+  lastIPAddress   String?
+  lastLoginFrom   EnumUserLoginFrom?
+
+  createdAt DateTime  @default(now())
+  createdBy String?   @db.Uuid
+  updatedAt DateTime  @updatedAt
+  updatedBy String?   @db.Uuid
+  deletedAt DateTime?
+  deletedBy String?   @db.Uuid
+
+  role      Role?      @relation("UserRole", fields: [roleId], references: [id])
+  sessions  Session[]  @relation("UserSessions")
+  twoFactor TwoFactor? @relation("UserTwoFactor")
+
+  @@unique([username])
+  @@unique([email])
+  @@index([status, roleId, createdAt])
+  @@index([id, deletedAt])
+  @@index([email, deletedAt])
+  @@index([createdAt])
+  @@map("users")
+}
+
+// ─── Sessions ────────────────────────────────────────────────────────────────
+
+model Session {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  jti       String
+  ipAddress String
+  userAgent Json?
+  expiredAt DateTime
+  revokedAt DateTime?
+  isRevoked Boolean   @default(false)
+
+  user User? @relation("UserSessions", fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+  createdBy String?  @db.Uuid
+  updatedAt DateTime @updatedAt
+  updatedBy String?  @db.Uuid
+
+  @@index([userId])
+  @@index([userId, isRevoked, expiredAt])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@map("sessions")
+}
+
+// ─── Two-Factor Authentication ───────────────────────────────────────────────
+
+model TwoFactor {
+  id            String    @id @default(uuid()) @db.Uuid
+  userId        String    @db.Uuid
+  secret        String?
+  iv            String?
+  backupCodes   String[]  @default([])
+  enabled       Boolean   @default(false)
+  requiredSetup Boolean   @default(false)
+  confirmedAt   DateTime?
+  lastUsedAt    DateTime?
+  attempt       Int       @default(0)
+
+  createdAt DateTime @default(now())
+  createdBy String?  @db.Uuid
+  updatedAt DateTime @updatedAt
+  updatedBy String?  @db.Uuid
+
+  user User? @relation("UserTwoFactor", fields: [userId], references: [id])
+
+  @@unique([userId])
+  @@index([createdAt])
+  @@index([updatedAt])
+  @@map("two_factors")
+}
+
+// ─── Feature Flags ───────────────────────────────────────────────────────────
+
+model FeatureFlag {
+  id             String  @id @default(uuid()) @db.Uuid
+  key            String
+  description    String
+  isEnable       Boolean @default(true)
+  rolloutPercent Int     @default(100)
+  metadata       Json?
+
+  createdAt DateTime @default(now())
+  createdBy String?  @db.Uuid
+  updatedAt DateTime @updatedAt
+  updatedBy String?  @db.Uuid
+
+  @@unique([key])
+  @@index([key, createdAt])
+  @@index([createdAt])
+  @@map("feature_flags")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum EnumUserGender {
+  male
+  female
+}
+
+enum EnumUserStatus {
+  active
+  inactive
+  blocked
+}
+
+enum EnumUserSignUpFrom {
+  system
+  admin
+  website
+  mobile
+}
+
+enum EnumUserLoginFrom {
+  website
+  mobile
+}
+
+enum EnumRoleType {
+  superAdmin
+  admin
+  user
+}
+
+enum EnumApiKeyType {
+  system
+  default
+}
