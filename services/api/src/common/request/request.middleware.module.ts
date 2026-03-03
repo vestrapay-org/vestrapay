@@ -9,7 +9,6 @@ import {
 import { RequestRequestIdMiddleware } from '@common/request/middlewares/request.request-id.middleware';
 import { RequestHelmetMiddleware } from '@common/request/middlewares/request.helmet.middleware';
 import { RequestBodyParserMiddleware } from '@common/request/middlewares/request.body-parser.middleware';
-import { RequestCorsMiddleware } from '@common/request/middlewares/request.cors.middleware';
 import { RequestUrlVersionMiddleware } from '@common/request/middlewares/request.url-version.middleware';
 import { RequestResponseTimeMiddleware } from '@common/request/middlewares/request.response-time.middleware';
 import { RequestCustomLanguageMiddleware } from '@common/request/middlewares/request.custom-language.middleware';
@@ -57,7 +56,6 @@ export class RequestMiddlewareModule implements NestModule {
                 RequestRequestIdMiddleware,
                 RequestHelmetMiddleware,
                 RequestBodyParserMiddleware,
-                RequestCorsMiddleware,
                 RequestUrlVersionMiddleware,
                 RequestResponseTimeMiddleware,
                 RequestCustomLanguageMiddleware,
