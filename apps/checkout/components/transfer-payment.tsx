@@ -16,10 +16,7 @@ const TRANSFER_DETAILS = {
 
 const EXPIRY_SECONDS = 1800;
 
-export function TransferPayment({
-  amount,
-  reference,
-}: PaymentComponentProps): React.ReactNode {
+export function TransferPayment({ amount, reference }: PaymentComponentProps): React.ReactNode {
   const [showDetails, setShowDetails] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [countdown, setCountdown] = useState(EXPIRY_SECONDS);
@@ -76,16 +73,14 @@ export function TransferPayment({
       <div className="animate-in fade-in-0 slide-in-from-bottom-2 space-y-5 duration-300">
         <p className="text-sm leading-relaxed text-[#6b7c93]">
           Generate a temporary bank account. Transfer exactly{" "}
-          <span className="font-semibold text-[#3c4257]">{amount}</span> to
-          complete your payment.
+          <span className="font-semibold text-[#3c4257]">{amount}</span> to complete your payment.
         </p>
 
         <div className="rounded-lg border border-[#e3e8ee] bg-[#f6f9fc] p-4">
           <div className="flex items-center gap-2 text-sm text-[#6b7c93]">
             <Clock className="size-4" />
             <span>
-              Account expires in{" "}
-              <span className="font-medium text-[#3c4257]">30 minutes</span>
+              Account expires in <span className="font-medium text-[#3c4257]">30 minutes</span>
             </span>
           </div>
         </div>
@@ -112,20 +107,15 @@ export function TransferPayment({
   return (
     <div className="animate-in fade-in-0 slide-in-from-bottom-3 space-y-5 duration-400">
       <p className="text-sm leading-relaxed text-[#6b7c93]">
-        Transfer exactly{" "}
-        <span className="font-semibold text-[#3c4257]">{amount}</span> to the
+        Transfer exactly <span className="font-semibold text-[#3c4257]">{amount}</span> to the
         account below.
       </p>
 
       <div className="overflow-hidden rounded-lg border border-[#e3e8ee]">
         <div className="flex items-center justify-between border-b border-[#e3e8ee] px-4 py-3.5">
           <div>
-            <p className="text-[10px] font-medium tracking-wider text-[#8898aa] uppercase">
-              Bank
-            </p>
-            <p className="mt-0.5 text-sm font-medium text-[#3c4257]">
-              {TRANSFER_DETAILS.bank}
-            </p>
+            <p className="text-[10px] font-medium tracking-wider text-[#8898aa] uppercase">Bank</p>
+            <p className="mt-0.5 text-sm font-medium text-[#3c4257]">{TRANSFER_DETAILS.bank}</p>
           </div>
         </div>
 
@@ -173,9 +163,7 @@ export function TransferPayment({
             <p className="text-[10px] font-medium tracking-wider text-[#8898aa] uppercase">
               Amount
             </p>
-            <p className="text-primary mt-0.5 text-sm font-semibold">
-              {amount}
-            </p>
+            <p className="text-primary mt-0.5 text-sm font-semibold">{amount}</p>
           </div>
         </div>
       </div>
@@ -184,9 +172,8 @@ export function TransferPayment({
         <div className="flex items-start gap-2.5 text-xs leading-relaxed text-amber-800/80">
           <Clock className="mt-0.5 size-3.5 shrink-0" />
           <span>
-            This account expires in{" "}
-            <span className="font-mono font-semibold">{timeStr}</span>. Complete
-            the transfer before it expires.
+            This account expires in <span className="font-mono font-semibold">{timeStr}</span>.
+            Complete the transfer before it expires.
           </span>
         </div>
       </div>
