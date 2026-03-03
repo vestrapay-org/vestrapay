@@ -35,7 +35,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Single build produces both builder and api from shared cache
       - name: Build and push builder image (migrator + seeder)
         uses: docker/build-push-action@v6
         with:
@@ -58,25 +57,24 @@ jobs:
           cache-from: type=gha,scope=builder
           cache-to: type=gha,scope=api,mode=max
 
-      - name: Copy config files to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: services/api/docker-compose.prod.yml,services/api/ci/jwks-server/jwks.conf
-          target: /tmp/
+      - name: Prepare config files
+        id: configs
+        run: |
+          echo "COMPOSE_B64=$(base64 -w0 services/api/docker-compose.prod.yml)" >> "$GITHUB_OUTPUT"
+          echo "JWKS_B64=$(base64 -w0 services/api/ci/jwks-server/jwks.conf)" >> "$GITHUB_OUTPUT"
 
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.3
         env:
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
           GHCR_USER: ${{ github.actor }}
+          COMPOSE_B64: ${{ steps.configs.outputs.COMPOSE_B64 }}
+          JWKS_B64: ${{ steps.configs.outputs.JWKS_B64 }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          envs: IMAGE_PREFIX,GHCR_PAT,GHCR_USER
+          envs: IMAGE_PREFIX,GHCR_PAT,GHCR_USER,COMPOSE_B64,JWKS_B64
           script: |
             set -e
 
@@ -85,11 +83,10 @@ jobs:
             echo "-> Stopping running services (preserving volumes)..."
             cd /opt/vestrapay 2>/dev/null && docker compose down 2>/dev/null || true
 
-            echo "-> Setting up files..."
+            echo "-> Writing config files..."
             mkdir -p /opt/vestrapay/keys
-            cp /tmp/services/api/docker-compose.prod.yml /opt/vestrapay/docker-compose.yml
-            cp /tmp/services/api/ci/jwks-server/jwks.conf /opt/vestrapay/jwks.conf
-            rm -rf /tmp/services
+            echo "${COMPOSE_B64}" | base64 -d > /opt/vestrapay/docker-compose.yml
+            echo "${JWKS_B64}" | base64 -d > /opt/vestrapay/jwks.conf
 
             echo "-> Logging into GHCR..."
             echo "${GHCR_PAT}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
