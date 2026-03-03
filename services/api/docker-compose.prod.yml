@@ -2,16 +2,40 @@ name: vestrapay
 
 services:
     migrator:
-        image: vestrapay-migrator:latest
+        image: ${IMAGE_PREFIX:-vestrapay}-migrator:latest
+        container_name: vestrapay-migrator
         env_file: .env
         networks:
             - app-network
         depends_on:
             postgres:
                 condition: service_healthy
+        deploy:
+            resources:
+                limits:
+                    memory: 256M
+
+    seeder:
+        image: ${IMAGE_PREFIX:-vestrapay}-seeder:latest
+        container_name: vestrapay-seeder
+        env_file: .env
+        networks:
+            - app-network
+        depends_on:
+            migrator:
+                condition: service_completed_successfully
+            postgres:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+        deploy:
+            resources:
+                limits:
+                    memory: 256M
 
     api:
-        image: vestrapay-api:latest
+        image: ${IMAGE_PREFIX:-vestrapay}-api:latest
+        container_name: vestrapay-api
         ports:
             - "80:3000"
         env_file: .env
@@ -19,7 +43,7 @@ services:
         networks:
             - app-network
         depends_on:
-            migrator:
+            seeder:
                 condition: service_completed_successfully
             redis:
                 condition: service_healthy
@@ -33,15 +57,20 @@ services:
                     "--no-verbose",
                     "--tries=1",
                     "--spider",
-                    "http://127.0.0.1:3000/docs",
+                    "http://127.0.0.1:3000/api/health/liveness",
                 ]
-            interval: 30s
+            interval: 20s
             timeout: 10s
             retries: 3
-            start_period: 30s
+            start_period: 60s
+        deploy:
+            resources:
+                limits:
+                    memory: 256M
 
     jwks-server:
         image: nginx:alpine
+        container_name: vestrapay-jwks
         restart: unless-stopped
         volumes:
             - ./keys/access-jwks.json:/usr/share/nginx/html/.well-known/access-jwks.json
@@ -63,9 +92,14 @@ services:
             timeout: 10s
             retries: 3
             start_period: 10s
+        deploy:
+            resources:
+                limits:
+                    memory: 64M
 
     redis:
-        image: redis:latest
+        image: redis:alpine
+        container_name: vestrapay-redis
         restart: unless-stopped
         volumes:
             - redis_data:/data
@@ -76,9 +110,14 @@ services:
             interval: 10s
             timeout: 30s
             retries: 5
+        deploy:
+            resources:
+                limits:
+                    memory: 64M
 
     postgres:
         image: postgres:16-alpine
+        container_name: vestrapay-postgres
         restart: unless-stopped
         env_file: .env
         environment:
@@ -90,13 +129,19 @@ services:
         networks:
             - app-network
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U vestrapay"]
+            test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vestrapay}"]
             interval: 10s
             timeout: 5s
             retries: 5
             start_period: 10s
+        deploy:
+            resources:
+                limits:
+                    memory: 128M
 
 volumes:
+    # WARNING: postgres_data contains the production database.
+    # NEVER use 'docker compose down -v' in production.
     postgres_data:
     redis_data:
 
