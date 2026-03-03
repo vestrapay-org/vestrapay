@@ -26,11 +26,13 @@ interface CardBackProps extends CardFaceProps {
   readonly cvv: string;
 }
 
-const SIGNATURE_STRIPES: ReadonlyArray<{ key: string; lightness: number }> =
-  Array.from({ length: 20 }, (_, i) => ({
+const SIGNATURE_STRIPES: ReadonlyArray<{ key: string; lightness: number }> = Array.from(
+  { length: 20 },
+  (_, i) => ({
     key: `s-${i}`,
     lightness: 50 + Math.sin(i * 0.7) * 15,
-  }));
+  }),
+);
 
 function ChipIcon(): React.ReactNode {
   return (
@@ -46,13 +48,7 @@ function ChipIcon(): React.ReactNode {
 
 function ContactlessIcon(): React.ReactNode {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      className="opacity-50"
-    >
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="opacity-50">
       <path
         d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"
         stroke="white"
@@ -89,20 +85,13 @@ function BrandDisplay({
   }
 
   return (
-    <div
-      className={`animate-in fade-in-0 zoom-in-75 duration-300 ${className}`}
-    >
+    <div className={`animate-in fade-in-0 zoom-in-75 duration-300 ${className}`}>
       <CardBrandIcon brand={brand} className="size-full" />
     </div>
   );
 }
 
-function CardFront({
-  cardNumber,
-  expiry,
-  cardholderName,
-  brand,
-}: CardFrontProps): React.ReactNode {
+function CardFront({ cardNumber, expiry, cardholderName, brand }: CardFrontProps): React.ReactNode {
   const displayNumber = cardNumber || "•••• •••• •••• ••••";
   const displayExpiry = expiry || "MM/YY";
   const displayName = cardholderName || "YOUR NAME";
@@ -110,24 +99,14 @@ function CardFront({
   return (
     <div className="card-face absolute inset-0 overflow-hidden rounded-lg bg-linear-to-br from-[#34287b] via-[#3d2f91] to-[#271d5e] p-3 text-white shadow-lg shadow-[#34287b]/30 sm:rounded-xl sm:p-4">
       <div className="absolute inset-0 opacity-[0.06]">
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 400 200"
-          preserveAspectRatio="none"
-        >
+        <svg width="100%" height="100%" viewBox="0 0 400 200" preserveAspectRatio="none">
           <circle cx="360" cy="-20" r="180" fill="white" />
           <circle cx="40" cy="220" r="140" fill="white" />
         </svg>
       </div>
 
       <div className="absolute top-0 right-0 h-full w-1/2 opacity-[0.03]">
-        <svg
-          width="100%"
-          height="100%"
-          viewBox="0 0 200 200"
-          preserveAspectRatio="none"
-        >
+        <svg width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="none">
           <path d="M0 0 Q200 50 150 200 L200 200 L200 0 Z" fill="white" />
         </svg>
       </div>
