@@ -9,10 +9,7 @@ import { useClipboard } from "@/hooks/use-clipboard";
 import { USSD_BANKS } from "@/lib/constants";
 import type { PaymentComponentProps } from "@/lib/types";
 
-export function USSDPayment({
-  amount,
-  reference,
-}: PaymentComponentProps): React.ReactNode {
+export function USSDPayment({ amount, reference }: PaymentComponentProps): React.ReactNode {
   const [selected, setSelected] = useState<string | null>(null);
   const [ussdCode, setUssdCode] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
