@@ -9,10 +9,17 @@ on:
       - 'services/api/**'
       - '.github/workflows/deploy-api.yml'
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/vestrapay
+
 jobs:
   deploy:
     name: Build & Deploy to VPS
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
       - name: Checkout code
@@ -21,39 +28,53 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build API image
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API image
         uses: docker/build-push-action@v6
         with:
           context: services/api
           file: services/api/ci/dockerfile
           target: main
-          tags: vestrapay-api:latest
-          load: true
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}-api:latest,${{ env.IMAGE_PREFIX }}-api:${{ github.sha }}
           cache-from: type=gha,scope=api
           cache-to: type=gha,scope=api,mode=max
 
-      - name: Build migrator image
+      - name: Build and push migrator image
         uses: docker/build-push-action@v6
         with:
           context: services/api
           file: services/api/ci/dockerfile
           target: migrator
-          tags: vestrapay-migrator:latest
-          load: true
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}-migrator:latest,${{ env.IMAGE_PREFIX }}-migrator:${{ github.sha }}
           cache-from: type=gha,scope=migrator
           cache-to: type=gha,scope=migrator,mode=max
 
-      - name: Save & compress Docker images
-        run: |
-          docker save vestrapay-api:latest vestrapay-migrator:latest | gzip > vestrapay-images.tar.gz
+      - name: Build and push seeder image
+        uses: docker/build-push-action@v6
+        with:
+          context: services/api
+          file: services/api/ci/dockerfile
+          target: seeder
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}-seeder:latest,${{ env.IMAGE_PREFIX }}-seeder:${{ github.sha }}
+          cache-from: type=gha,scope=seeder
+          cache-to: type=gha,scope=seeder,mode=max
 
-      - name: Copy files to VPS
+      - name: Copy config files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: vestrapay-images.tar.gz,services/api/docker-compose.prod.yml,services/api/ci/jwks-server/jwks.conf
+          source: services/api/docker-compose.prod.yml,services/api/ci/jwks-server/jwks.conf
           target: /tmp/
 
       - name: Deploy on VPS
@@ -62,39 +83,49 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          envs: IMAGE_PREFIX
           script: |
             set -e
 
-            echo "→ Stopping running services..."
+            export IMAGE_PREFIX="${IMAGE_PREFIX}"
+
+            echo "-> Stopping running services (preserving volumes)..."
             cd /opt/vestrapay 2>/dev/null && docker compose down 2>/dev/null || true
 
-            echo "→ Cleaning up old images..."
-            docker image prune -af
-
-            echo "→ Setting up files..."
+            echo "-> Setting up files..."
             mkdir -p /opt/vestrapay/keys
             cp /tmp/services/api/docker-compose.prod.yml /opt/vestrapay/docker-compose.yml
             cp /tmp/services/api/ci/jwks-server/jwks.conf /opt/vestrapay/jwks.conf
             rm -rf /tmp/services
 
-            echo "→ Loading Docker images..."
-            docker load < /tmp/vestrapay-images.tar.gz
-            rm -f /tmp/vestrapay-images.tar.gz
+            echo "-> Logging into GHCR..."
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            echo "→ Checking .env exists..."
+            echo "-> Pulling latest images..."
+            cd /opt/vestrapay
+            docker compose pull api migrator seeder
+
+            echo "-> Cleaning up dangling images..."
+            docker image prune -f
+
+            echo "-> Checking .env exists..."
             if [ ! -f /opt/vestrapay/.env ]; then
               echo "ERROR: /opt/vestrapay/.env not found. Create it on the VPS first."
               exit 1
             fi
 
-            echo "→ Starting services (migrator runs automatically before API)..."
-            cd /opt/vestrapay
+            echo "-> Verifying database volume..."
+            docker volume inspect vestrapay_postgres_data > /dev/null 2>&1 && \
+              echo "  postgres_data volume exists and will be preserved" || \
+              echo "  postgres_data volume does not exist (first deploy)"
+
+            echo "-> Starting services (migrator -> seeder -> API)..."
             docker compose up -d
 
-            echo "→ Waiting for API to be healthy..."
+            echo "-> Waiting for API to be healthy..."
             timeout 120 sh -c 'until docker compose ps api | grep -q "healthy"; do sleep 5; done' || echo "Warning: API health check timed out"
 
-            echo "→ Cleaning up migrator container..."
-            docker compose rm -f migrator 2>/dev/null || true
+            echo "-> Cleaning up init containers..."
+            docker compose rm -f migrator seeder 2>/dev/null || true
 
-            echo "→ Done."
+            echo "-> Done."

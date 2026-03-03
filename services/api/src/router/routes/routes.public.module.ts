@@ -4,6 +4,7 @@ import { PaymentPublicController } from '@modules/payment/controllers/payment.pu
 import { PaymentModule } from '@modules/payment/payment.module';
 import { BankPublicController } from '@modules/bank/controllers/bank.public.controller';
 import { BankModule } from '@modules/bank/bank.module';
+import { HealthPublicController } from '@modules/health/controllers/health.public.controller';
 import { Module } from '@nestjs/common';
 
 @Module({
@@ -11,6 +12,7 @@ import { Module } from '@nestjs/common';
         UserPublicController,
         PaymentPublicController,
         BankPublicController,
+        HealthPublicController,
     ],
     providers: [],
     exports: [],

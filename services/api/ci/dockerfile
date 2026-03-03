@@ -18,7 +18,11 @@ RUN pnpm build
 
 # Migration stage — has prisma CLI from devDependencies
 FROM builder AS migrator
-CMD ["pnpm", "exec", "prisma", "migrate", "deploy"]
+CMD ["pnpm", "exec", "prisma", "db", "push"]
+
+# Seeder stage — runs migration seeds after schema is pushed
+FROM builder AS seeder
+CMD ["sh", "-c", "node dist/migration.js apiKey --type seed && node dist/migration.js featureFlag --type seed && node dist/migration.js role --type seed && node dist/migration.js user --type seed && node dist/migration.js merchant --type seed && node dist/migration.js template-email --type seed"]
 
 # Main Stage
 FROM base AS main
@@ -41,6 +45,6 @@ EXPOSE 3000
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/docs
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health/liveness
 
 CMD ["pnpm", "start:prod"]

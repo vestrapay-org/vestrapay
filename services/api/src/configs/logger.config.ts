@@ -17,11 +17,11 @@ export interface IConfigDebug {
 export default registerAs(
     'logger',
     (): IConfigDebug => ({
-        enable: process.env.LOGGER_ENABLE === 'true',
-        level: process.env.LOGGER_LEVEL ?? 'debug',
+        enable: process.env.LOGGER_ENABLE !== 'false',
+        level: process.env.LOGGER_LEVEL ?? 'info',
         intoFile: process.env.LOGGER_INTO_FILE === 'true',
         filePath: '/logs',
-        auto: process.env.LOGGER_AUTO === 'true',
+        auto: process.env.LOGGER_AUTO !== 'false',
         prettier: process.env.LOGGER_PRETTIER === 'true',
         sentry: {
             dsn: process.env.SENTRY_DSN,
