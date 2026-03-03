@@ -12,10 +12,7 @@ import { usePaymentSimulation } from "@/hooks/use-payment-simulation";
 import { formatCardNumber, formatExpiry } from "@/lib/formatters";
 import type { PaymentComponentProps } from "@/lib/types";
 
-export function CardPayment({
-  amount,
-  reference,
-}: PaymentComponentProps): React.ReactNode {
+export function CardPayment({ amount, reference }: PaymentComponentProps): React.ReactNode {
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
@@ -26,9 +23,7 @@ export function CardPayment({
 
   const brand = detectCardBrand(cardNumber);
   const isComplete =
-    cardNumber.replace(/\s/g, "").length >= 15 &&
-    expiry.length >= 4 &&
-    cvv.length >= 3;
+    cardNumber.replace(/\s/g, "").length >= 15 && expiry.length >= 4 && cvv.length >= 3;
 
   if (status !== "idle") {
     return (
@@ -53,10 +48,7 @@ export function CardPayment({
         isFlipped={isCvvFocused}
       />
       <div className="space-y-2">
-        <Label
-          htmlFor="card-number"
-          className="text-[13px] font-medium text-[#3c4257]"
-        >
+        <Label htmlFor="card-number" className="text-[13px] font-medium text-[#3c4257]">
           Card number
         </Label>
         <div className="relative">
@@ -82,10 +74,7 @@ export function CardPayment({
       </div>
 
       <div className="space-y-2">
-        <Label
-          htmlFor="cardholder-name"
-          className="text-[13px] font-medium text-[#3c4257]"
-        >
+        <Label htmlFor="cardholder-name" className="text-[13px] font-medium text-[#3c4257]">
           Cardholder name
         </Label>
         <Input
@@ -100,10 +89,7 @@ export function CardPayment({
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label
-            htmlFor="expiry"
-            className="text-[13px] font-medium text-[#3c4257]"
-          >
+          <Label htmlFor="expiry" className="text-[13px] font-medium text-[#3c4257]">
             Expiry
           </Label>
           <Input
@@ -117,10 +103,7 @@ export function CardPayment({
           />
         </div>
         <div className="space-y-2">
-          <Label
-            htmlFor="cvv"
-            className="text-[13px] font-medium text-[#3c4257]"
-          >
+          <Label htmlFor="cvv" className="text-[13px] font-medium text-[#3c4257]">
             CVC
           </Label>
           <Input
@@ -132,9 +115,7 @@ export function CardPayment({
             value={cvv}
             onFocus={() => setIsCvvFocused(true)}
             onBlur={() => setIsCvvFocused(false)}
-            onChange={(e) =>
-              setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))
-            }
+            onChange={(e) => setCvv(e.target.value.replace(/\D/g, "").slice(0, 4))}
             className="h-10 rounded-lg border-[#e3e8ee] bg-white text-sm tracking-wider text-[#3c4257] transition-all duration-200 placeholder:text-[#a3acb9] sm:h-11 sm:text-[15px]"
           />
         </div>
@@ -147,9 +128,7 @@ export function CardPayment({
           onChange={(e) => setSaveCard(e.target.checked)}
           className="size-4 cursor-pointer rounded border-[#e3e8ee] accent-[#34287b]"
         />
-        <span className="text-[13px] text-[#6b7c93]">
-          Save card for future payments
-        </span>
+        <span className="text-[13px] text-[#6b7c93]">Save card for future payments</span>
       </label>
 
       <Button
