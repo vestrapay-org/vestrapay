@@ -50,7 +50,7 @@ export default registerAs(
                 'HEAD',
                 'OPTIONS',
             ],
-            allowedOrigin: process.env.CORS_ALLOWED_ORIGIN?.split(',') ?? [],
+            allowedOrigin: process.env.CORS_ALLOWED_ORIGIN?.split(',') ?? ['*'],
             allowedHeader: [
                 'Accept',
                 'Accept-Language',

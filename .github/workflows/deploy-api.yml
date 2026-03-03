@@ -35,6 +35,18 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Single build produces both builder and api from shared cache
+      - name: Build and push builder image (migrator + seeder)
+        uses: docker/build-push-action@v6
+        with:
+          context: services/api
+          file: services/api/ci/dockerfile
+          target: builder
+          push: true
+          tags: ${{ env.IMAGE_PREFIX }}-builder:latest,${{ env.IMAGE_PREFIX }}-builder:${{ github.sha }}
+          cache-from: type=gha,scope=builder
+          cache-to: type=gha,scope=builder,mode=max
+
       - name: Build and push API image
         uses: docker/build-push-action@v6
         with:
@@ -43,30 +55,8 @@ jobs:
           target: main
           push: true
           tags: ${{ env.IMAGE_PREFIX }}-api:latest,${{ env.IMAGE_PREFIX }}-api:${{ github.sha }}
-          cache-from: type=gha,scope=api
+          cache-from: type=gha,scope=builder
           cache-to: type=gha,scope=api,mode=max
-
-      - name: Build and push migrator image
-        uses: docker/build-push-action@v6
-        with:
-          context: services/api
-          file: services/api/ci/dockerfile
-          target: migrator
-          push: true
-          tags: ${{ env.IMAGE_PREFIX }}-migrator:latest,${{ env.IMAGE_PREFIX }}-migrator:${{ github.sha }}
-          cache-from: type=gha,scope=migrator
-          cache-to: type=gha,scope=migrator,mode=max
-
-      - name: Build and push seeder image
-        uses: docker/build-push-action@v6
-        with:
-          context: services/api
-          file: services/api/ci/dockerfile
-          target: seeder
-          push: true
-          tags: ${{ env.IMAGE_PREFIX }}-seeder:latest,${{ env.IMAGE_PREFIX }}-seeder:${{ github.sha }}
-          cache-from: type=gha,scope=seeder
-          cache-to: type=gha,scope=seeder,mode=max
 
       - name: Copy config files to VPS
         uses: appleboy/scp-action@v0.1.7
@@ -79,11 +69,14 @@ jobs:
 
       - name: Deploy on VPS
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GHCR_USER: ${{ github.actor }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          envs: IMAGE_PREFIX
+          envs: IMAGE_PREFIX,GHCR_PAT,GHCR_USER
           script: |
             set -e
 
@@ -99,11 +92,11 @@ jobs:
             rm -rf /tmp/services
 
             echo "-> Logging into GHCR..."
-            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${GHCR_PAT}" | docker login ghcr.io -u "${GHCR_USER}" --password-stdin
 
             echo "-> Pulling latest images..."
             cd /opt/vestrapay
-            docker compose pull api migrator seeder
+            docker compose pull
 
             echo "-> Cleaning up dangling images..."
             docker image prune -f
@@ -120,7 +113,7 @@ jobs:
               echo "  postgres_data volume does not exist (first deploy)"
 
             echo "-> Starting services (migrator -> seeder -> API)..."
-            docker compose up -d
+            docker compose up -d --force-recreate
 
             echo "-> Waiting for API to be healthy..."
             timeout 120 sh -c 'until docker compose ps api | grep -q "healthy"; do sleep 5; done' || echo "Warning: API health check timed out"

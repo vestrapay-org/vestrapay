@@ -45,6 +45,16 @@ async function bootstrap(): Promise<void> {
     process.env.NODE_ENV = env;
     process.env.TZ = timezone;
 
+    // CORS
+    const corsOrigin = process.env.CORS_ALLOWED_ORIGIN || '*';
+    app.enableCors({
+        origin: corsOrigin === '*' ? true : corsOrigin.split(','),
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+        credentials: true,
+        allowedHeaders:
+            'Content-Type, Accept, Authorization, x-api-key, x-custom-lang, x-timezone, x-request-id, x-correlation-id',
+    });
+
     // Setting
     app.setGlobalPrefix(globalPrefix);
     useContainer(app.select(AppModule), { fallbackOnErrors: true });
