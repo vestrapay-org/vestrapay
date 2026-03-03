@@ -8,17 +8,12 @@ import { usePaymentSimulation } from "@/hooks/use-payment-simulation";
 import { BANKS } from "@/lib/constants";
 import type { PaymentComponentProps } from "@/lib/types";
 
-export function BankPayment({
-  amount,
-  reference,
-}: PaymentComponentProps): React.ReactNode {
+export function BankPayment({ amount, reference }: PaymentComponentProps): React.ReactNode {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(null);
   const { status, simulate, reset } = usePaymentSimulation({ delay: 3500 });
 
-  const filtered = BANKS.filter((b) =>
-    b.name.toLowerCase().includes(search.toLowerCase()),
-  );
+  const filtered = BANKS.filter((b) => b.name.toLowerCase().includes(search.toLowerCase()));
 
   const selectedBank = BANKS.find((b) => b.code === selected);
 
@@ -39,9 +34,7 @@ export function BankPayment({
 
   return (
     <div className="animate-in fade-in-0 slide-in-from-bottom-2 space-y-4 duration-300">
-      <p className="text-sm text-[#6b7c93]">
-        Select your bank to pay via internet banking.
-      </p>
+      <p className="text-sm text-[#6b7c93]">Select your bank to pay via internet banking.</p>
 
       <div className="relative">
         <input
@@ -72,9 +65,7 @@ export function BankPayment({
           </button>
         ))}
         {filtered.length === 0 && (
-          <div className="px-4 py-6 text-center text-sm text-[#a3acb9]">
-            No banks found
-          </div>
+          <div className="px-4 py-6 text-center text-sm text-[#a3acb9]">No banks found</div>
         )}
       </div>
 
@@ -84,9 +75,7 @@ export function BankPayment({
         disabled={!selected}
         onClick={simulate}
       >
-        {selected
-          ? `Pay ${amount} with ${selectedBank?.name}`
-          : `Select a bank`}
+        {selected ? `Pay ${amount} with ${selectedBank?.name}` : `Select a bank`}
       </Button>
     </div>
   );
