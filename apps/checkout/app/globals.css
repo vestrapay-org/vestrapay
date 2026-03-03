@@ -1,1 +1,171 @@
-@import "@vestrapay/ui/styles/globals.css";
+@import "tailwindcss";
+
+@source "../../../packages/ui/src/**/*.tsx";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: oklch(0.97 0.003 280);
+    --foreground: oklch(0.15 0.02 280);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.15 0.02 280);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.15 0.02 280);
+    --primary: oklch(0.28 0.1 280);
+    --primary-foreground: oklch(0.98 0 0);
+    --secondary: oklch(0.95 0.008 280);
+    --secondary-foreground: oklch(0.24 0.06 280);
+    --muted: oklch(0.95 0.005 280);
+    --muted-foreground: oklch(0.5 0.015 280);
+    --accent: oklch(0.95 0.012 280);
+    --accent-foreground: oklch(0.24 0.06 280);
+    --destructive: oklch(0.55 0.22 27);
+    --destructive-foreground: oklch(0.98 0 0);
+    --border: oklch(0.91 0.005 280);
+    --input: oklch(0.91 0.005 280);
+    --ring: oklch(0.28 0.1 280);
+    --radius: 0.625rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  input:focus-visible,
+  select:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px oklch(0.28 0.1 280 / 0.15);
+    border-color: oklch(0.28 0.1 280 / 0.5);
+  }
+
+  .stripe-scroll::-webkit-scrollbar {
+    width: 4px;
+  }
+  .stripe-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .stripe-scroll::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 2px;
+  }
+}
+
+@keyframes animate-in {
+  from {
+    opacity: var(--tw-enter-opacity, 0);
+    transform: translate(
+        var(--tw-enter-translate-x, 0),
+        var(--tw-enter-translate-y, 0)
+      )
+      scale(var(--tw-enter-scale, 1)) rotate(var(--tw-enter-rotate, 0));
+  }
+}
+
+.animate-in {
+  animation-name: animate-in;
+  animation-fill-mode: both;
+  --tw-enter-opacity: 0;
+}
+
+.fade-in-0 {
+  --tw-enter-opacity: 0;
+}
+
+.zoom-in-50 {
+  --tw-enter-scale: 0.5;
+}
+
+.zoom-in-75 {
+  --tw-enter-scale: 0.75;
+}
+
+.zoom-in-95 {
+  --tw-enter-scale: 0.95;
+}
+
+.slide-in-from-bottom-2 {
+  --tw-enter-translate-y: 0.5rem;
+}
+
+.slide-in-from-bottom-3 {
+  --tw-enter-translate-y: 0.75rem;
+}
+
+.slide-in-from-left-2 {
+  --tw-enter-translate-x: -0.5rem;
+}
+
+.duration-300 {
+  animation-duration: 300ms;
+}
+
+.duration-400 {
+  animation-duration: 400ms;
+}
+
+.duration-500 {
+  animation-duration: 500ms;
+}
+
+.card-perspective {
+  perspective: 1000px;
+}
+
+.card-inner {
+  transform-style: preserve-3d;
+}
+
+.card-flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  backface-visibility: hidden;
+}
+
+.card-face-back {
+  transform: rotateY(180deg);
+}
