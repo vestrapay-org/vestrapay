@@ -4,6 +4,8 @@ import { HealthModule } from '@modules/health/health.module';
 import { RoleSystemController } from '@modules/role/controllers/role.system.controller';
 import { UserSystemController } from '@modules/user/controllers/user.system.controller';
 import { UserModule } from '@modules/user/user.module';
+import { PaymentSystemController } from '@modules/payment/controllers/payment.system.controller';
+import { PaymentModule } from '@modules/payment/payment.module';
 import { Module } from '@nestjs/common';
 
 /**
@@ -16,9 +18,10 @@ import { Module } from '@nestjs/common';
         HealthSystemController,
         FeatureFlagSystemController,
         RoleSystemController,
+        PaymentSystemController,
     ],
     providers: [],
     exports: [],
-    imports: [UserModule, HealthModule],
+    imports: [UserModule, HealthModule, PaymentModule],
 })
 export class RoutesSystemModule {}

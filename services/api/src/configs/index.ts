@@ -13,6 +13,7 @@ import LoggerConfig from '@configs/logger.config';
 import SessionConfig from '@configs/session.config';
 import FeatureFlagConfig from '@configs/feature-flag.config';
 import ResponseConfig from '@configs/response.config';
+import PaymentConfig from '@configs/payment.config';
 
 export default [
     AppConfig,
@@ -30,4 +31,5 @@ export default [
     SessionConfig,
     FeatureFlagConfig,
     ResponseConfig,
+    PaymentConfig,
 ];

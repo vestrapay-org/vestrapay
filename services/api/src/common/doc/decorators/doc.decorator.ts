@@ -48,7 +48,6 @@ import { EnumRoleStatusCodeError } from '@modules/role/enums/role.status-code.en
 import { EnumFileExtensionDocument } from '@common/file/enums/file.enum';
 import { faker } from '@faker-js/faker';
 
-
 /**
  * Helper function to create a schema object with consistent structure.
  * @param doc - Document options containing DTO and status information

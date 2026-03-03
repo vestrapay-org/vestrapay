@@ -1,0 +1,96 @@
+name: vestrapay
+
+services:
+    api:
+        image: vestrapay-api:latest
+        ports:
+            - "80:3000"
+        env_file: .env
+        restart: unless-stopped
+        networks:
+            - app-network
+        depends_on:
+            redis:
+                condition: service_healthy
+            postgres:
+                condition: service_healthy
+            jwks-server:
+                condition: service_healthy
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "wget",
+                    "--no-verbose",
+                    "--tries=1",
+                    "--spider",
+                    "http://localhost:3000/docs",
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 30s
+
+    jwks-server:
+        image: nginx:alpine
+        restart: unless-stopped
+        volumes:
+            - ./keys/access-jwks.json:/usr/share/nginx/html/.well-known/access-jwks.json
+            - ./keys/refresh-jwks.json:/usr/share/nginx/html/.well-known/refresh-jwks.json
+            - ./jwks.conf:/etc/nginx/conf.d/default.conf
+        networks:
+            - app-network
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "wget",
+                    "--no-verbose",
+                    "--tries=1",
+                    "--spider",
+                    "http://localhost:80/.well-known/access-jwks.json",
+                ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 10s
+
+    redis:
+        image: redis:latest
+        restart: unless-stopped
+        volumes:
+            - redis_data:/data
+        networks:
+            - app-network
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 30s
+            retries: 5
+
+    postgres:
+        image: postgres:16-alpine
+        restart: unless-stopped
+        env_file: .env
+        environment:
+            POSTGRES_USER: ${POSTGRES_USER:-vestrapay}
+            POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+            POSTGRES_DB: ${POSTGRES_DB:-vestrapay}
+        volumes:
+            - postgres_data:/var/lib/postgresql/data
+        networks:
+            - app-network
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U vestrapay"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+            start_period: 10s
+
+volumes:
+    postgres_data:
+    redis_data:
+
+networks:
+    app-network:
+        driver: bridge
