@@ -8,10 +8,7 @@ import { usePaymentSimulation } from "@/hooks/use-payment-simulation";
 import { generateQRPattern } from "@/lib/qr";
 import type { PaymentComponentProps } from "@/lib/types";
 
-export function QRCodePayment({
-  amount,
-  reference,
-}: PaymentComponentProps): React.ReactNode {
+export function QRCodePayment({ amount, reference }: PaymentComponentProps): React.ReactNode {
   const [generated, setGenerated] = useState(false);
   const [generating, setGenerating] = useState(false);
   const { status, simulate, reset } = usePaymentSimulation({ delay: 3500 });
@@ -53,18 +50,15 @@ export function QRCodePayment({
       {!generated ? (
         <>
           <p className="text-sm leading-relaxed text-[#6b7c93]">
-            Generate a QR code and scan it with your bank&apos;s mobile app or
-            any NQR-supported app to pay{" "}
-            <span className="font-semibold text-[#3c4257]">{amount}</span>.
+            Generate a QR code and scan it with your bank&apos;s mobile app or any NQR-supported app
+            to pay <span className="font-semibold text-[#3c4257]">{amount}</span>.
           </p>
 
           <div className="flex flex-col items-center rounded-lg border border-[#e3e8ee] bg-[#f6f9fc] p-5 sm:p-8">
             <div className="flex size-20 items-center justify-center rounded-2xl bg-[#edf2f7]">
               <QrCode className="size-10 text-[#a3acb9]" />
             </div>
-            <p className="mt-4 text-sm text-[#a3acb9]">
-              QR code will appear here
-            </p>
+            <p className="mt-4 text-sm text-[#a3acb9]">QR code will appear here</p>
           </div>
 
           <Button
@@ -92,85 +86,18 @@ export function QRCodePayment({
 
           <div className="animate-in fade-in-0 zoom-in-95 flex flex-col items-center rounded-lg border border-[#e3e8ee] bg-white p-5 duration-500 sm:p-8">
             <div className="relative size-36 sm:size-48">
-              <svg
-                viewBox="0 0 200 200"
-                className="size-full text-[#3c4257]"
-                fill="currentColor"
-              >
-                <rect
-                  x="10"
-                  y="10"
-                  width="50"
-                  height="50"
-                  rx="4"
-                  fillOpacity="0.9"
-                />
-                <rect
-                  x="16"
-                  y="16"
-                  width="38"
-                  height="38"
-                  rx="2"
-                  fill="white"
-                />
-                <rect
-                  x="24"
-                  y="24"
-                  width="22"
-                  height="22"
-                  rx="2"
-                  fillOpacity="0.9"
-                />
+              <svg viewBox="0 0 200 200" className="size-full text-[#3c4257]" fill="currentColor">
+                <rect x="10" y="10" width="50" height="50" rx="4" fillOpacity="0.9" />
+                <rect x="16" y="16" width="38" height="38" rx="2" fill="white" />
+                <rect x="24" y="24" width="22" height="22" rx="2" fillOpacity="0.9" />
 
-                <rect
-                  x="140"
-                  y="10"
-                  width="50"
-                  height="50"
-                  rx="4"
-                  fillOpacity="0.9"
-                />
-                <rect
-                  x="146"
-                  y="16"
-                  width="38"
-                  height="38"
-                  rx="2"
-                  fill="white"
-                />
-                <rect
-                  x="154"
-                  y="24"
-                  width="22"
-                  height="22"
-                  rx="2"
-                  fillOpacity="0.9"
-                />
+                <rect x="140" y="10" width="50" height="50" rx="4" fillOpacity="0.9" />
+                <rect x="146" y="16" width="38" height="38" rx="2" fill="white" />
+                <rect x="154" y="24" width="22" height="22" rx="2" fillOpacity="0.9" />
 
-                <rect
-                  x="10"
-                  y="140"
-                  width="50"
-                  height="50"
-                  rx="4"
-                  fillOpacity="0.9"
-                />
-                <rect
-                  x="16"
-                  y="146"
-                  width="38"
-                  height="38"
-                  rx="2"
-                  fill="white"
-                />
-                <rect
-                  x="24"
-                  y="154"
-                  width="22"
-                  height="22"
-                  rx="2"
-                  fillOpacity="0.9"
-                />
+                <rect x="10" y="140" width="50" height="50" rx="4" fillOpacity="0.9" />
+                <rect x="16" y="146" width="38" height="38" rx="2" fill="white" />
+                <rect x="24" y="154" width="22" height="22" rx="2" fillOpacity="0.9" />
 
                 {qrPattern.map((cell) =>
                   cell.visible ? (
@@ -188,16 +115,12 @@ export function QRCodePayment({
               </svg>
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="flex size-12 items-center justify-center rounded-lg bg-white">
-                  <span className="text-primary text-sm font-black tracking-tight">
-                    VP
-                  </span>
+                  <span className="text-primary text-sm font-black tracking-tight">VP</span>
                 </div>
               </div>
             </div>
 
-            <p className="mt-4 text-xs text-[#a3acb9]">
-              Scan with any NQR-supported banking app
-            </p>
+            <p className="mt-4 text-xs text-[#a3acb9]">Scan with any NQR-supported banking app</p>
           </div>
 
           <Button
