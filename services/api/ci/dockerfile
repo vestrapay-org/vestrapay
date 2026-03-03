@@ -1,9 +1,9 @@
 # Build stage base
-FROM node:lts-alpine AS base
+FROM node:24-alpine AS base
 LABEL maintainer="dev@vestrapay.io"
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10 --activate
 WORKDIR /app
 
 # Stage to install all dependencies and build the app

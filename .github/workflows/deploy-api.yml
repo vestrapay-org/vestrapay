@@ -21,22 +21,14 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ hashFiles('services/api/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
       - name: Build Docker images
         run: |
           docker buildx build \
             --file services/api/ci/dockerfile \
             --tag vestrapay-api:latest \
             --target main \
-            --cache-from type=local,src=/tmp/.buildx-cache \
-            --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
+            --cache-from type=gha \
+            --cache-to type=gha,mode=max \
             --load \
             services/api
 
@@ -44,14 +36,9 @@ jobs:
             --file services/api/ci/dockerfile \
             --tag vestrapay-migrator:latest \
             --target migrator \
-            --cache-from type=local,src=/tmp/.buildx-cache \
+            --cache-from type=gha \
             --load \
             services/api
-
-      - name: Move cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Save & compress Docker images
         run: |
