@@ -96,10 +96,7 @@
 @keyframes animate-in {
   from {
     opacity: var(--tw-enter-opacity, 0);
-    transform: translate(
-        var(--tw-enter-translate-x, 0),
-        var(--tw-enter-translate-y, 0)
-      )
+    transform: translate(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0))
       scale(var(--tw-enter-scale, 1)) rotate(var(--tw-enter-rotate, 0));
   }
 }
