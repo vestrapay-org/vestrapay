@@ -1,0 +1,41 @@
+export type PaymentMethod = "card" | "bank" | "transfer" | "ussd" | "qr";
+
+export type PaymentStatus = "idle" | "processing" | "success" | "failed";
+
+export type ActivePaymentStatus = Exclude<PaymentStatus, "idle">;
+
+export type CardBrand = "mastercard" | "visa" | "verve" | "unknown";
+
+export interface PaymentComponentProps {
+  readonly amount: string;
+  readonly reference: string;
+}
+
+export interface Bank {
+  readonly code: string;
+  readonly name: string;
+}
+
+export interface USSDBank extends Bank {
+  readonly ussd: string;
+}
+
+export interface Merchant {
+  readonly name: string;
+  readonly email: string;
+  readonly amount: number;
+  readonly currency: string;
+  readonly reference: string;
+}
+
+export interface SVGIconProps {
+  readonly className?: string;
+  readonly active?: boolean;
+}
+
+export interface QRCell {
+  readonly x: number;
+  readonly y: number;
+  readonly key: string;
+  readonly visible: boolean;
+}
