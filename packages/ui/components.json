@@ -11,10 +11,10 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@workspace/ui/components",
-    "utils": "@workspace/ui/lib/utils",
-    "hooks": "@workspace/ui/hooks",
-    "lib": "@workspace/ui/lib",
-    "ui": "@workspace/ui/components"
+    "components": "@vestrapay/ui/components",
+    "utils": "@vestrapay/ui/lib/utils",
+    "hooks": "@vestrapay/ui/hooks",
+    "lib": "@vestrapay/ui/lib",
+    "ui": "@vestrapay/ui/components"
   }
 }
