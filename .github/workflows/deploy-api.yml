@@ -120,7 +120,7 @@ jobs:
               echo "  postgres_data volume does not exist (first deploy)"
 
             echo "-> Starting services (migrator -> seeder -> API)..."
-            docker compose up -d
+            docker compose up -d --force-recreate
 
             echo "-> Waiting for API to be healthy..."
             timeout 120 sh -c 'until docker compose ps api | grep -q "healthy"; do sleep 5; done' || echo "Warning: API health check timed out"
