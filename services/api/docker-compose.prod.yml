@@ -1,6 +1,15 @@
 name: vestrapay
 
 services:
+    migrator:
+        image: vestrapay-migrator:latest
+        env_file: .env
+        networks:
+            - app-network
+        depends_on:
+            postgres:
+                condition: service_healthy
+
     api:
         image: vestrapay-api:latest
         ports:
@@ -10,9 +19,9 @@ services:
         networks:
             - app-network
         depends_on:
+            migrator:
+                condition: service_completed_successfully
             redis:
-                condition: service_healthy
-            postgres:
                 condition: service_healthy
             jwks-server:
                 condition: service_healthy
