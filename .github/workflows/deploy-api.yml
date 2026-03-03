@@ -32,7 +32,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: vestrapay-api.tar.gz,services/api/docker-compose.prod.yml,services/api/keys/access-jwks.json,services/api/keys/refresh-jwks.json,services/api/ci/jwks-server/jwks.conf
+          source: vestrapay-api.tar.gz,services/api/docker-compose.prod.yml,services/api/ci/jwks-server/jwks.conf
           target: /tmp/
 
       - name: Deploy on VPS
@@ -51,8 +51,6 @@ jobs:
             echo "→ Setting up files..."
             mkdir -p /opt/vestrapay/keys
             cp /tmp/services/api/docker-compose.prod.yml /opt/vestrapay/docker-compose.yml
-            cp /tmp/services/api/keys/access-jwks.json /opt/vestrapay/keys/access-jwks.json
-            cp /tmp/services/api/keys/refresh-jwks.json /opt/vestrapay/keys/refresh-jwks.json
             cp /tmp/services/api/ci/jwks-server/jwks.conf /opt/vestrapay/jwks.conf
             rm -rf /tmp/services
 
