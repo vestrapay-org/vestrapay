@@ -2,13 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Lock, X } from "@/components/icons";
-import {
-  CardIcon,
-  BankIcon,
-  TransferIcon,
-  USSDIcon,
-  QRIcon,
-} from "@/components/payment-icons";
+import { CardIcon, BankIcon, TransferIcon, USSDIcon, QRIcon } from "@/components/payment-icons";
 import { CardPayment } from "@/components/card-payment";
 import { BankPayment } from "@/components/bank-payment";
 import { TransferPayment } from "@/components/transfer-payment";
@@ -16,11 +10,7 @@ import { USSDPayment } from "@/components/ussd-payment";
 import { QRCodePayment } from "@/components/qr-payment";
 import { MERCHANT } from "@/lib/constants";
 import { formatCurrency } from "@/lib/formatters";
-import type {
-  PaymentMethod,
-  PaymentComponentProps,
-  SVGIconProps,
-} from "@/lib/types";
+import type { PaymentMethod, PaymentComponentProps, SVGIconProps } from "@/lib/types";
 
 interface PaymentMethodConfig {
   readonly id: PaymentMethod;
@@ -52,14 +42,11 @@ export default function CheckoutPage(): React.ReactNode {
   const [activeMethod, setActiveMethod] = useState<PaymentMethod>("card");
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [displayMethod, setDisplayMethod] = useState<PaymentMethod>("card");
-  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
-      if (transitionTimeoutRef.current)
-        clearTimeout(transitionTimeoutRef.current);
+      if (transitionTimeoutRef.current) clearTimeout(transitionTimeoutRef.current);
     };
   }, []);
 
@@ -104,9 +91,7 @@ export default function CheckoutPage(): React.ReactNode {
                     }`}
                   >
                     <Icon className="size-5 sm:size-6" active={isActive} />
-                    <span className="text-xs sm:text-[13px]">
-                      {method.label}
-                    </span>
+                    <span className="text-xs sm:text-[13px]">{method.label}</span>
                   </button>
                 );
               })}
@@ -120,9 +105,7 @@ export default function CheckoutPage(): React.ReactNode {
                   <p className="text-sm font-medium text-[#3c4257] sm:text-[15px]">
                     {MERCHANT.name}
                   </p>
-                  <p className="mt-0.5 text-xs text-[#6b7c93] sm:text-sm">
-                    {MERCHANT.email}
-                  </p>
+                  <p className="mt-0.5 text-xs text-[#6b7c93] sm:text-sm">{MERCHANT.email}</p>
                 </div>
                 <button
                   type="button"
@@ -141,10 +124,7 @@ export default function CheckoutPage(): React.ReactNode {
               className="min-h-72 px-4 pt-4 pb-6 transition-opacity duration-150 ease-in-out sm:px-6 sm:pt-5"
               style={{ opacity: isTransitioning ? 0 : 1 }}
             >
-              <ActiveComponent
-                amount={formattedAmount}
-                reference={MERCHANT.reference}
-              />
+              <ActiveComponent amount={formattedAmount} reference={MERCHANT.reference} />
             </div>
           </div>
         </div>
@@ -152,8 +132,7 @@ export default function CheckoutPage(): React.ReactNode {
         <div className="mt-5 flex items-center justify-center gap-1.5 pb-4 sm:pb-0">
           <Lock className="size-3 text-[#8898aa]/60" />
           <span className="text-[11px] tracking-wide text-[#8898aa]">
-            Secured by{" "}
-            <span className="text-primary font-semibold">Vestrapay</span>
+            Secured by <span className="text-primary font-semibold">Vestrapay</span>
           </span>
         </div>
       </div>
