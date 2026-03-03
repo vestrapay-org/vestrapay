@@ -70,12 +70,8 @@ function ProcessingIndicator(): React.ReactNode {
       </div>
 
       <div className="mt-5 space-y-1.5 text-center">
-        <p className="text-lg font-semibold text-[#3c4257]">
-          Processing payment
-        </p>
-        <p className="text-sm text-[#6b7c93]">
-          Please do not close this window
-        </p>
+        <p className="text-lg font-semibold text-[#3c4257]">Processing payment</p>
+        <p className="text-sm text-[#6b7c93]">Please do not close this window</p>
       </div>
 
       <div className="mt-5 w-full space-y-2">
@@ -95,10 +91,7 @@ function ProcessingIndicator(): React.ReactNode {
             >
               <div className="flex size-5 shrink-0 items-center justify-center">
                 {isDone ? (
-                  <CircleCheck
-                    className="size-4 text-emerald-500"
-                    strokeWidth={2}
-                  />
+                  <CircleCheck className="size-4 text-emerald-500" strokeWidth={2} />
                 ) : isActive ? (
                   <div className="size-2.5 animate-pulse rounded-full bg-current" />
                 ) : (
@@ -132,17 +125,11 @@ function SuccessResult({
         />
       </div>
       <div className="mt-5 space-y-1.5 text-center">
-        <p className="text-lg font-semibold text-emerald-600">
-          Payment Successful
-        </p>
-        <p className="text-sm text-[#6b7c93]">
-          {amount} was charged successfully
-        </p>
+        <p className="text-lg font-semibold text-emerald-600">Payment Successful</p>
+        <p className="text-sm text-[#6b7c93]">{amount} was charged successfully</p>
       </div>
       <div className="mt-5 rounded-lg bg-[#f6f9fc] px-4 py-2.5">
-        <p className="text-[10px] font-medium tracking-wider text-[#8898aa] uppercase">
-          Reference
-        </p>
+        <p className="text-[10px] font-medium tracking-wider text-[#8898aa] uppercase">Reference</p>
         <p className="mt-0.5 font-mono text-xs text-[#3c4257]">{reference}</p>
       </div>
       <button
@@ -180,9 +167,7 @@ function FailedResult({
         </p>
       </div>
       <div className="mt-5 rounded-lg bg-[#f6f9fc] px-4 py-2.5">
-        <p className="text-[10px] font-medium tracking-wider text-[#8898aa] uppercase">
-          Reference
-        </p>
+        <p className="text-[10px] font-medium tracking-wider text-[#8898aa] uppercase">Reference</p>
         <p className="mt-0.5 font-mono text-xs text-[#3c4257]">{reference}</p>
       </div>
       <div className="mt-5 flex w-full gap-3 sm:mt-6">
@@ -216,18 +201,10 @@ export function PaymentResult({
     <div className="flex flex-col items-center px-1 py-4 text-center sm:px-0 sm:py-6">
       {status === "processing" && <ProcessingIndicator />}
       {status === "success" && (
-        <SuccessResult
-          amount={amount}
-          reference={reference}
-          onClose={onClose}
-        />
+        <SuccessResult amount={amount} reference={reference} onClose={onClose} />
       )}
       {status === "failed" && (
-        <FailedResult
-          reference={reference}
-          onClose={onClose}
-          onRetry={onRetry}
-        />
+        <FailedResult reference={reference} onClose={onClose} onRetry={onRetry} />
       )}
     </div>
   );
