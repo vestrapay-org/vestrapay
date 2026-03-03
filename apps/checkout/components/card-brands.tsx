@@ -41,9 +41,7 @@ export function VisaLogo({ className }: SVGIconProps): React.ReactNode {
 
 export function VerveIcon({ className }: SVGIconProps): React.ReactNode {
   return (
-    <div
-      className={`flex items-center justify-center font-black tracking-tight ${className}`}
-    >
+    <div className={`flex items-center justify-center font-black tracking-tight ${className}`}>
       <span className="text-[10px] text-red-600">Verve</span>
     </div>
   );
@@ -62,10 +60,7 @@ interface CardBrandIconProps {
   readonly className?: string;
 }
 
-export function CardBrandIcon({
-  brand,
-  className,
-}: CardBrandIconProps): React.ReactNode {
+export function CardBrandIcon({ brand, className }: CardBrandIconProps): React.ReactNode {
   switch (brand) {
     case "mastercard":
       return <MastercardLogo className={className} />;
