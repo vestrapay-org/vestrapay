@@ -16,6 +16,10 @@ COPY . .
 RUN pnpm db:generate
 RUN pnpm build
 
+# Migration stage — has prisma CLI from devDependencies
+FROM builder AS migrator
+CMD ["pnpm", "exec", "prisma", "migrate", "deploy"]
+
 # Main Stage
 FROM base AS main
 COPY package.json pnpm-lock.yaml ./
