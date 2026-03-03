@@ -2,8 +2,9 @@ name: vestrapay
 
 services:
     migrator:
-        image: ${IMAGE_PREFIX:-vestrapay}-migrator:latest
+        image: ${IMAGE_PREFIX:-vestrapay}-builder:latest
         container_name: vestrapay-migrator
+        command: ["pnpm", "exec", "prisma", "db", "push"]
         env_file: .env
         networks:
             - app-network
@@ -16,8 +17,15 @@ services:
                     memory: 256M
 
     seeder:
-        image: ${IMAGE_PREFIX:-vestrapay}-seeder:latest
+        image: ${IMAGE_PREFIX:-vestrapay}-builder:latest
         container_name: vestrapay-seeder
+        command: >
+            sh -c "node dist/migration.js apiKey --type seed &&
+                   node dist/migration.js featureFlag --type seed &&
+                   node dist/migration.js role --type seed &&
+                   node dist/migration.js user --type seed &&
+                   node dist/migration.js merchant --type seed &&
+                   node dist/migration.js template-email --type seed"
         env_file: .env
         networks:
             - app-network
