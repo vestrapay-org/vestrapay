@@ -98,6 +98,7 @@ model User {
   role      Role?      @relation("UserRole", fields: [roleId], references: [id])
   sessions  Session[]  @relation("UserSessions")
   twoFactor TwoFactor? @relation("UserTwoFactor")
+  merchant  Merchant?  @relation("UserMerchant")
 
   @@unique([username])
   @@unique([email])
@@ -216,4 +217,185 @@ enum EnumRoleType {
 enum EnumApiKeyType {
   system
   default
+}
+
+// ─── Payment Enums ──────────────────────────────────────────────────────────
+
+enum EnumMerchantStatus {
+  pending
+  active
+  suspended
+  deactivated
+}
+
+enum EnumMerchantKeyType {
+  test
+  live
+}
+
+enum EnumTransactionStatus {
+  pending
+  processing
+  success
+  failed
+  abandoned
+}
+
+enum EnumTransactionChannel {
+  card
+  bank_transfer
+  ussd
+}
+
+// ─── Merchants ──────────────────────────────────────────────────────────────
+
+model Merchant {
+  id              String              @id @default(uuid()) @db.Uuid
+  userId          String?             @db.Uuid
+  businessName    String
+  businessEmail   String
+  businessPhone   String?
+  country         String              @default("NG")
+  currency        String              @default("NGN")
+  status          EnumMerchantStatus  @default(pending)
+  webhookUrl      String?
+  webhookSecret   String?
+  isDefault       Boolean             @default(false)
+  metadata        Json?
+
+  createdAt DateTime  @default(now())
+  createdBy String?   @db.Uuid
+  updatedAt DateTime  @updatedAt
+  updatedBy String?   @db.Uuid
+
+  user              User?              @relation("UserMerchant", fields: [userId], references: [id])
+  merchantKeys      MerchantKey[]      @relation("MerchantKeys")
+  transactions      Transaction[]      @relation("MerchantTransactions")
+  settlementAccount SettlementAccount? @relation("MerchantSettlement")
+
+  @@unique([businessEmail])
+  @@unique([userId])
+  @@index([status, createdAt])
+  @@index([isDefault])
+  @@index([createdAt])
+  @@map("merchants")
+}
+
+model MerchantKey {
+  id          String              @id @default(uuid()) @db.Uuid
+  merchantId  String              @db.Uuid
+  type        EnumMerchantKeyType
+  publicKey   String
+  secretKey   String
+  secretHash  String
+  isActive    Boolean             @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  merchant Merchant @relation("MerchantKeys", fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([publicKey])
+  @@unique([secretKey])
+  @@index([merchantId, type, isActive])
+  @@map("merchant_keys")
+}
+
+// ─── Transactions ───────────────────────────────────────────────────────────
+
+model Transaction {
+  id                 String                  @id @default(uuid()) @db.Uuid
+  merchantId         String                  @db.Uuid
+  reference          String
+  amount             Int                     // Amount in kobo (100 = ₦1)
+  currency           String                  @default("NGN")
+  channel            EnumTransactionChannel?
+  status             EnumTransactionStatus   @default(pending)
+  email              String?
+  description        String?
+  fees               Int                     @default(0)
+  metadata           Json?
+  ipAddress          String?
+
+  // MPGS session tracking (card payments)
+  mpgsSessionId      String?
+  mpgsOrderId        String?
+  mpgs3dsHtml        String?                 @db.Text
+  mpgsAuthTxnId      String?
+
+  // Processor response
+  processorReference String?
+  processorResponse  Json?
+  processorChannel   String?                 // "mpgs", "korapay", "anchor"
+
+  // Bank transfer fields (Anchor)
+  bankTransferAccountNumber String?
+  bankTransferBankName      String?
+  bankTransferExpiresAt     DateTime?
+
+  // USSD fields (KoraPay)
+  ussdCode           String?
+
+  paidAt             DateTime?
+  failedAt           DateTime?
+  gatewayResponse    String?
+
+  createdAt DateTime @default(now())
+  createdBy String?  @db.Uuid
+  updatedAt DateTime @updatedAt
+  updatedBy String?  @db.Uuid
+
+  merchant Merchant @relation("MerchantTransactions", fields: [merchantId], references: [id])
+
+  @@unique([reference])
+  @@index([merchantId, status, createdAt])
+  @@index([merchantId, reference])
+  @@index([status, createdAt])
+  @@index([mpgsSessionId])
+  @@index([createdAt])
+  @@map("transactions")
+}
+
+// ─── Settlement Accounts ────────────────────────────────────────────────────
+
+model SettlementAccount {
+  id              String @id @default(uuid()) @db.Uuid
+  merchantId      String @db.Uuid
+  bankCode        String
+  bankName        String
+  accountNumber   String
+  accountName     String
+  currency        String @default("NGN")
+  isActive        Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  merchant Merchant @relation("MerchantSettlement", fields: [merchantId], references: [id])
+
+  @@unique([merchantId])
+  @@index([merchantId, isActive])
+  @@map("settlement_accounts")
+}
+
+// ─── Banks ──────────────────────────────────────────────────────────────────
+
+model Bank {
+  id        String  @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String
+  code      String
+  longCode  String?
+  country   String  @default("NG")
+  currency  String  @default("NGN")
+  type      String? // nuban, mobile_money
+  isActive  Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([code, country])
+  @@unique([slug])
+  @@index([country, isActive])
+  @@map("banks")
 }

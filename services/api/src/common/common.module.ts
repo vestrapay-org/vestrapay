@@ -17,6 +17,7 @@ import { CacheMainModule } from '@common/cache/cache.module';
 import { LoggerModule } from '@common/logger/logger.module';
 import { QueueRegisterModule } from 'src/queues/queue.register.module';
 import { SessionModule } from '@modules/session/session.module';
+import { ProcessorModule } from '@modules/processor/processor.module';
 
 /**
  * Common module that provides shared functionality across the application.
@@ -52,6 +53,7 @@ import { SessionModule } from '@modules/session/session.module';
         RoleModule,
         FeatureFlagModule,
         SessionModule,
+        ProcessorModule,
     ],
 })
 export class CommonModule {}

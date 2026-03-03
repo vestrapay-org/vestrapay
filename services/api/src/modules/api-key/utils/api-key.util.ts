@@ -4,7 +4,6 @@ import { plainToInstance } from 'class-transformer';
 import { HelperService } from '@common/helper/services/helper.service';
 import { Cache } from 'cache-manager';
 import { IRequestApp } from '@common/request/interfaces/request.interface';
-import { EnumAppEnvironment } from '@app/enums/app.enum';
 import { ApiKey, EnumApiKeyType } from '@prisma/client';
 import { ApiKeyDto } from '@modules/api-key/dtos/api-key.dto';
 import { IApiKeyGenerateCredential } from '@modules/api-key/interfaces/api-key.interface';
@@ -15,7 +14,6 @@ import { CacheMainProvider } from '@common/cache/constants/cache.constant';
 @Injectable()
 export class ApiKeyUtil {
     private readonly cachePrefixKey: string;
-    private readonly env: EnumAppEnvironment;
     private readonly header: string;
 
     constructor(
@@ -26,7 +24,6 @@ export class ApiKeyUtil {
         this.cachePrefixKey = this.configService.get<string>(
             'auth.xApiKey.cachePrefixKey'
         );
-        this.env = this.configService.get<EnumAppEnvironment>('app.env');
         this.header = this.configService.get<string>('auth.xApiKey.header');
     }
 
@@ -68,7 +65,7 @@ export class ApiKeyUtil {
 
     createKey(key?: string): string {
         const random: string = this.helperService.randomString(25);
-        return `${this.env}_${key ?? random}`;
+        return key ?? random;
     }
 
     createHash(key: string, secret: string): string {

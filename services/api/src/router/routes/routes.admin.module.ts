@@ -5,6 +5,8 @@ import { SessionAdminController } from '@modules/session/controllers/session.adm
 import { SessionModule } from '@modules/session/session.module';
 import { UserAdminController } from '@modules/user/controllers/user.admin.controller';
 import { UserModule } from '@modules/user/user.module';
+import { TransactionAdminController } from '@modules/transaction/controllers/transaction.admin.controller';
+import { TransactionModule } from '@modules/transaction/transaction.module';
 import { Module } from '@nestjs/common';
 
 @Module({
@@ -14,9 +16,10 @@ import { Module } from '@nestjs/common';
         UserAdminController,
         SessionAdminController,
         FeatureFlagAdminController,
+        TransactionAdminController,
     ],
     providers: [],
     exports: [],
-    imports: [UserModule, SessionModule],
+    imports: [UserModule, SessionModule, TransactionModule],
 })
 export class RoutesAdminModule {}

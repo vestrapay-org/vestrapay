@@ -50,6 +50,8 @@ config.yml
 # pnpm
 .pnpm-store/
 
+docker-compose*.yml
+
 # Files not required for Docker build
 .editorconfig
 cspell.json

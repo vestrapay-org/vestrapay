@@ -10,8 +10,8 @@ import { AuthTokenResponseDto } from '@modules/auth/dtos/response/auth.token.res
 import { FeatureFlagProtected } from '@modules/feature-flag/decorators/feature-flag.decorator';
 import {
     UserPublicLoginCredentialDoc,
-    UserPublicLoginVerifyTwoFactorDoc,
     UserPublicLoginEnableTwoFactorDoc,
+    UserPublicLoginVerifyTwoFactorDoc,
     UserPublicSignUpDoc,
 } from '@modules/user/docs/user.public.doc';
 import { UserLoginEnableTwoFactorRequestDto } from '@modules/user/dtos/request/user.login-enable-two-factor.request.dto';

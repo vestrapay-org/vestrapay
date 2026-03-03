@@ -9,10 +9,11 @@ import { MigrationTemplateEmailSeed } from '@migration/seeds/migration.template-
 import { EmailModule } from '@modules/email/email.module';
 import { MigrationAwsS3ConfigSeed } from '@migration/seeds/migration.aws-s3-config.seed';
 import { AwsModule } from '@common/aws/aws.module';
+import { MigrationMerchantSeed } from '@migration/seeds/migration.merchant.seed';
 
 /**
  * Migration module that provides database seeding functionality.
- * Contains seed providers for API keys, roles, users, and feature flags.
+ * Contains seed providers for API keys, roles, users, feature flags, and merchants.
  */
 @Module({
     imports: [CommonModule, UserModule, EmailModule, AwsModule],
@@ -23,6 +24,7 @@ import { AwsModule } from '@common/aws/aws.module';
         MigrationUserSeed,
         MigrationTemplateEmailSeed,
         MigrationAwsS3ConfigSeed,
+        MigrationMerchantSeed,
     ],
     exports: [],
 })
