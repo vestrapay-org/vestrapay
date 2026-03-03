@@ -18,12 +18,31 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ hashFiles('services/api/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+
       - name: Build Docker image
         run: |
-          docker build \
-            -f services/api/ci/dockerfile \
-            -t vestrapay-api:latest \
+          docker buildx build \
+            --file services/api/ci/dockerfile \
+            --tag vestrapay-api:latest \
+            --cache-from type=local,src=/tmp/.buildx-cache \
+            --cache-to type=local,dest=/tmp/.buildx-cache-new,mode=max \
+            --load \
             services/api
+
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Save & compress Docker image
         run: docker save vestrapay-api:latest | gzip > vestrapay-api.tar.gz
@@ -62,6 +81,13 @@ jobs:
               exit 1
             fi
 
+            echo "→ Starting infra services..."
+            cd /opt/vestrapay
+            docker compose up -d redis postgres jwks-server
+
+            echo "→ Waiting for database..."
+            sleep 5
+
             echo "→ Running database migrations..."
             docker run --rm \
               --network vestrapay_app-network \
@@ -69,8 +95,7 @@ jobs:
               vestrapay-api:latest \
               pnpm prisma migrate deploy
 
-            echo "→ Starting services..."
-            cd /opt/vestrapay
+            echo "→ Starting API..."
             docker compose up -d
 
             echo "→ Cleaning up old images..."
