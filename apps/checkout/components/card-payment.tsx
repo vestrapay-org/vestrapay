@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Input } from "@vestrapay/ui/components/input";
 import { Label } from "@vestrapay/ui/components/label";
 import { Button } from "@vestrapay/ui/components/button";
@@ -8,31 +8,145 @@ import { CreditCard } from "@/components/icons";
 import { detectCardBrand, CardBrandIcon } from "@/components/card-brands";
 import { VirtualCard } from "@/components/virtual-card";
 import { PaymentResult } from "@/components/payment-result";
-import { usePaymentSimulation } from "@/hooks/use-payment-simulation";
+import { ThreeDsChallenge } from "@/components/three-ds-challenge";
+import { chargeCard, complete3ds, verifyTransaction } from "@/lib/api";
+import { useTransactionPoller } from "@/hooks/use-transaction-poller";
 import { formatCardNumber, formatExpiry } from "@/lib/formatters";
-import type { PaymentComponentProps } from "@/lib/types";
+import type { PaymentComponentProps, ActivePaymentStatus } from "@/lib/types";
 
-export function CardPayment({ amount, reference }: PaymentComponentProps): React.ReactNode {
+type CardPaymentPhase =
+  | { step: "form" }
+  | { step: "processing" }
+  | { step: "3ds"; html: string; reference: string }
+  | { step: "result"; status: ActivePaymentStatus; reference: string; errorMsg?: string };
+
+export function CardPayment({
+  amount,
+  amountInSmallestUnit,
+  reference,
+  email,
+  currency,
+}: PaymentComponentProps): React.ReactNode {
   const [cardNumber, setCardNumber] = useState("");
   const [expiry, setExpiry] = useState("");
   const [cvv, setCvv] = useState("");
   const [cardholderName, setCardholderName] = useState("");
   const [saveCard, setSaveCard] = useState(false);
   const [isCvvFocused, setIsCvvFocused] = useState(false);
-  const { status, simulate, reset } = usePaymentSimulation({ delay: 3000 });
+  const [phase, setPhase] = useState<CardPaymentPhase>({ step: "form" });
 
   const brand = detectCardBrand(cardNumber);
   const isComplete =
     cardNumber.replace(/\s/g, "").length >= 15 && expiry.length >= 4 && cvv.length >= 3;
 
-  if (status !== "idle") {
+  const threeDsRef = phase.step === "3ds" ? phase.reference : "";
+  useTransactionPoller({
+    reference: threeDsRef,
+    enabled: phase.step === "3ds",
+    intervalMs: 3_000,
+    onSettled: (status) => {
+      setPhase({ step: "result", status, reference: threeDsRef });
+    },
+  });
+
+  const handleCharge = useCallback(async () => {
+    setPhase({ step: "processing" });
+
+    try {
+      const digits = cardNumber.replace(/\s/g, "");
+      const expiryDigits = expiry.replace(/\D/g, "");
+      const expiryMonth = expiryDigits.slice(0, 2);
+      const expiryYear = expiryDigits.slice(2, 4);
+
+      const res = await chargeCard({
+        amount: amountInSmallestUnit,
+        currency,
+        email,
+        description: `Payment ${reference}`,
+        card: {
+          number: digits,
+          cvv,
+          expiryMonth,
+          expiryYear,
+        },
+      });
+
+      const { status, reference: apiRef, threeDsHtml } = res.data;
+
+      switch (status) {
+        case "success":
+          setPhase({ step: "result", status: "success", reference: apiRef });
+          break;
+        case "3ds_required":
+          setPhase({ step: "3ds", html: threeDsHtml ?? "", reference: apiRef });
+          break;
+        case "failed":
+          setPhase({ step: "result", status: "failed", reference: apiRef });
+          break;
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Something went wrong";
+      setPhase({ step: "result", status: "failed", reference, errorMsg: msg });
+    }
+  }, [cardNumber, expiry, cvv, amount, amountInSmallestUnit, currency, email, reference]);
+
+  const handle3dsComplete = useCallback(async (ref: string) => {
+    setPhase({ step: "processing" });
+
+    try {
+      const res = await complete3ds({ reference: ref });
+      const { status, reference: apiRef } = res.data;
+
+      setPhase({
+        step: "result",
+        status: status === "success" ? "success" : "failed",
+        reference: apiRef,
+      });
+    } catch {
+      try {
+        const verify = await verifyTransaction(ref);
+        const finalStatus = verify.data.status === "success" ? "success" : "failed";
+        setPhase({ step: "result", status: finalStatus, reference: ref });
+      } catch (verifyErr) {
+        const msg = verifyErr instanceof Error ? verifyErr.message : "3DS verification failed";
+        setPhase({ step: "result", status: "failed", reference: ref, errorMsg: msg });
+      }
+    }
+  }, []);
+
+  const resetToForm = useCallback(() => {
+    setPhase({ step: "form" });
+  }, []);
+
+  if (phase.step === "processing") {
     return (
       <PaymentResult
-        status={status}
+        status="processing"
         amount={amount}
         reference={reference}
-        onClose={reset}
-        onRetry={simulate}
+        onClose={resetToForm}
+      />
+    );
+  }
+
+  if (phase.step === "3ds") {
+    return (
+      <ThreeDsChallenge
+        html={phase.html}
+        reference={phase.reference}
+        onComplete={handle3dsComplete}
+      />
+    );
+  }
+
+  if (phase.step === "result") {
+    return (
+      <PaymentResult
+        status={phase.status}
+        amount={amount}
+        reference={phase.reference}
+        onClose={resetToForm}
+        onRetry={handleCharge}
       />
     );
   }
@@ -135,7 +249,7 @@ export function CardPayment({ amount, reference }: PaymentComponentProps): React
         className="bg-primary text-primary-foreground hover:bg-primary/90 mt-1 h-10 w-full cursor-pointer rounded-lg text-sm font-semibold tracking-wide transition-all duration-200 disabled:opacity-40 sm:mt-2 sm:h-11 sm:text-[15px]"
         size="lg"
         disabled={!isComplete}
-        onClick={simulate}
+        onClick={handleCharge}
       >
         {`Pay ${amount}`}
       </Button>
