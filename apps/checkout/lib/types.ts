@@ -8,7 +8,10 @@ export type CardBrand = "mastercard" | "visa" | "verve" | "unknown";
 
 export interface PaymentComponentProps {
   readonly amount: string;
+  readonly amountInSmallestUnit: number;
   readonly reference: string;
+  readonly email: string;
+  readonly currency: string;
 }
 
 export interface Bank {
@@ -39,3 +42,46 @@ export interface QRCell {
   readonly key: string;
   readonly visible: boolean;
 }
+
+// ── Card Payment API Types ──────────────────────────────────────────────────
+
+export interface ChargeCardRequest {
+  readonly amount: number;
+  readonly currency: string;
+  readonly email: string;
+  readonly description?: string;
+  readonly card: {
+    readonly number: string;
+    readonly cvv: string;
+    readonly expiryMonth: string;
+    readonly expiryYear: string;
+  };
+}
+
+export type ChargeCardStatus = "success" | "3ds_required" | "failed";
+
+export interface ChargeCardData {
+  readonly status: ChargeCardStatus;
+  readonly reference: string;
+  readonly threeDsHtml: string | null;
+}
+
+export interface ApiResponse<T> {
+  readonly metadata: {
+    readonly language: string;
+    readonly timestamp: number;
+    readonly timezone: string;
+    readonly path: string;
+    readonly version: string;
+    readonly repoVersion: string;
+  };
+  readonly message: string;
+  readonly statusCode: number;
+  readonly data: T;
+}
+
+export interface ThreeDsCompleteRequest {
+  readonly reference: string;
+}
+
+export type ThreeDsCompleteData = ChargeCardData;
