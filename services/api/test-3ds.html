@@ -66,11 +66,12 @@
 
         <div id="status"></div>
         <div id="threeds-container"></div>
+        <div id="result" style="display:none;margin-top:16px;padding:14px;border-radius:8px;background:#f9fafb;border:1px solid #e5e7eb;text-align:left;font-size:13px"></div>
     </div>
 
     <script>
         const API_BASE = 'http://localhost:3000/api/v1/public/payment';
-        const API_KEY = 'local_fyFGb7ywyM37TqDY8nuhAmGW5:qbp7LmCxYUTHFwKvHnxGW1aTyjSNU6ytN21etK89MaP2Dj2KZP';
+        const API_KEY = 'fyFGb7ywyM37TqDY8nuhAmGW5:qbp7LmCxYUTHFwKvHnxGW1aTyjSNU6ytN21etK89MaP2Dj2KZP';
 
         function showStatus(msg, type) {
             const el = document.getElementById('status');
@@ -79,10 +80,39 @@
             el.style.display = 'block';
         }
 
+        function showResult(d) {
+            const rd = document.getElementById('result');
+            rd.innerHTML =
+                '<div style="margin-bottom:6px"><b>Status:</b> <span style="color:' + (d.status === 'success' ? '#166534' : '#991b1b') + '">' + d.status + '</span></div>' +
+                '<div style="margin-bottom:6px"><b>Reference:</b> ' + d.reference + '</div>' +
+                '<pre style="background:#f3f4f6;padding:10px;border-radius:6px;font-size:11px;overflow-x:auto;margin-top:8px">' + JSON.stringify(d, null, 2) + '</pre>';
+            rd.style.display = 'block';
+        }
+
+        // Listen for postMessage from 3DS callback iframe
+        window.addEventListener('message', function (ev) {
+            if (ev.data && ev.data.reference) {
+                document.getElementById('threeds-container').innerHTML = '';
+                const d = ev.data;
+                const btn = document.getElementById('payBtn');
+                if (d.status === 'success') {
+                    showStatus('Payment Successful! Ref: ' + d.reference, 'success');
+                    btn.textContent = 'Paid!';
+                } else {
+                    showStatus('Payment Failed', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Try Again';
+                }
+                showResult(d);
+            }
+        });
+
         async function pay() {
             const btn = document.getElementById('payBtn');
             btn.disabled = true;
             btn.textContent = 'Processing...';
+            document.getElementById('result').style.display = 'none';
+            document.getElementById('threeds-container').innerHTML = '';
             showStatus('Sending card to MPGS...', 'info');
 
             try {
@@ -109,7 +139,8 @@
                 const data = json.data;
 
                 if (data.status === 'success') {
-                    showStatus('Payment successful! Ref: ' + data.reference, 'success');
+                    showStatus('Payment Successful! Ref: ' + data.reference, 'success');
+                    showResult(data);
                     btn.textContent = 'Paid!';
                     return;
                 }
@@ -120,8 +151,7 @@
                     container.innerHTML = data.threeDsHtml;
 
                     // Execute any scripts in the injected HTML
-                    const scripts = container.querySelectorAll('script');
-                    scripts.forEach(script => {
+                    container.querySelectorAll('script').forEach(script => {
                         const newScript = document.createElement('script');
                         newScript.textContent = script.textContent;
                         script.parentNode.replaceChild(newScript, script);
@@ -132,7 +162,8 @@
                 }
 
                 if (data.status === 'failed') {
-                    showStatus('Payment failed: ' + (data.gatewayResponse || 'Declined'), 'error');
+                    showStatus('Payment failed', 'error');
+                    showResult(data);
                     btn.disabled = false;
                     btn.textContent = 'Try Again';
                     return;

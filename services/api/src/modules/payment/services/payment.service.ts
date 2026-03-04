@@ -38,9 +38,10 @@ export class PaymentService {
         @Inject(USSD_PROCESSOR)
         private readonly ussdProcessor: IUssdProcessor
     ) {
-        const baseUrl =
+        const baseUrl = (
             process.env.APP_PUBLIC_URL ??
-            `http://localhost:${this.configService.get<number>('app.http.port')}`;
+            `http://localhost:${this.configService.get<number>('app.http.port')}`
+        ).replace(/\/+$/, '');
         this.redirectResponseUrl = `${baseUrl}/api/v1/public/payment/3ds-callback`;
     }
 

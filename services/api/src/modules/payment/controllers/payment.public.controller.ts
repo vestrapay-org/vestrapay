@@ -73,7 +73,8 @@ export class PaymentPublicController {
         const result = await this.paymentService.handle3dsCallback();
         const color = result.status === 'success' ? '#22c55e' : '#ef4444';
         res.setHeader('Content-Type', 'text/html');
-        res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-src *;");
+        res.removeHeader('X-Frame-Options');
+        res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-src *; frame-ancestors *;");
         res.send(`
             <!DOCTYPE html>
             <html>
@@ -85,6 +86,9 @@ export class PaymentPublicController {
                     <p style="color:#6b7280;margin:0 0 16px;">Reference: ${result.reference}</p>
                     <pre style="background:#f3f4f6;padding:16px;border-radius:8px;text-align:left;font-size:12px;">${JSON.stringify(result, null, 2)}</pre>
                 </div>
+                <script>
+                    try { window.parent.postMessage(${JSON.stringify(result)}, '*'); } catch(e) {}
+                </script>
             </body>
             </html>
         `);
@@ -134,14 +138,33 @@ button:hover{background:#4f46e5}button:disabled{background:#9ca3af;cursor:not-al
 <button id="btn" onclick="pay()">Pay Now</button>
 <div id="s"></div>
 <div id="tc"></div>
+<div id="rd" style="display:none;margin-top:14px;padding:14px;border-radius:8px;background:#f9fafb;border:1px solid #e5e7eb;text-align:left;font-size:13px"></div>
 </div>
 <script>
 const B=window.location.origin+'/api/v1/public/payment';
 function ss(m,t){const e=document.getElementById('s');e.textContent=m;e.className='s'+t;e.style.display='block'}
+function showResult(d){
+const rd=document.getElementById('rd');
+rd.innerHTML='<h3 style="margin:0 0 8px;font-size:14px;">Payment Result</h3>'+
+'<div style="margin-bottom:6px"><b>Status:</b> <span style="color:'+(d.status==='success'?'#166534':'#991b1b')+'">'+d.status+'</span></div>'+
+'<div style="margin-bottom:6px"><b>Reference:</b> '+d.reference+'</div>'+
+'<pre style="background:#f3f4f6;padding:10px;border-radius:6px;font-size:11px;overflow-x:auto;margin-top:8px">'+JSON.stringify(d,null,2)+'</pre>';
+rd.style.display='block';
+}
+window.addEventListener('message',function(ev){
+if(ev.data&&ev.data.reference){
+document.getElementById('tc').innerHTML='';
+const d=ev.data;const btn=document.getElementById('btn');
+if(d.status==='success'){ss('Payment Successful! Ref: '+d.reference,'s');btn.textContent='Paid!'}
+else{ss('Payment Failed','e');btn.disabled=false;btn.textContent='Try Again'}
+showResult(d);
+}
+});
 async function pay(){
 const K=document.getElementById('ak').value.trim();
 if(!K){ss('Enter your API key first','e');return}
 const btn=document.getElementById('btn');btn.disabled=true;btn.textContent='Processing...';
+document.getElementById('rd').style.display='none';document.getElementById('tc').innerHTML='';
 ss('Sending to MPGS...','i');
 try{
 const r=await fetch(B+'/charge/card',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':K},
@@ -152,14 +175,14 @@ cvv:document.getElementById('cv').value,
 expiryMonth:document.getElementById('mm').value,
 expiryYear:document.getElementById('yy').value}})});
 const j=await r.json();const d=j.data;
-if(d.status==='success'){ss('Payment Successful! Ref: '+d.reference,'s');btn.textContent='Paid!';return}
+if(d.status==='success'){ss('Payment Successful! Ref: '+d.reference,'s');showResult(d);btn.textContent='Paid!';return}
 if(d.status==='3ds_required'){
 ss('3DS challenge loaded below. Complete it to finish payment.','i');
 const tc=document.getElementById('tc');
 tc.innerHTML=d.threeDsHtml;
 tc.querySelectorAll('script').forEach(s=>{const n=document.createElement('script');n.textContent=s.textContent;s.parentNode.replaceChild(n,s)});
 btn.textContent='Complete 3DS below...';return}
-if(d.status==='failed'){ss('Payment failed','e');btn.disabled=false;btn.textContent='Try Again';return}
+if(d.status==='failed'){ss('Payment failed','e');showResult(d);btn.disabled=false;btn.textContent='Try Again';return}
 ss(JSON.stringify(d),'e');
 }catch(e){ss('Error: '+e.message,'e');btn.disabled=false;btn.textContent='Try Again'}}
 </script>
