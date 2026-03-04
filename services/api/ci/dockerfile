@@ -3,7 +3,7 @@ FROM node:24-alpine AS base
 LABEL maintainer="dev@vestrapay.io"
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
-RUN corepack enable && corepack prepare pnpm@10 --activate
+RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
 WORKDIR /app
 
 # Builder stage — install deps (cached layer), then build
@@ -38,6 +38,6 @@ EXPOSE 3000
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health/liveness
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/public/health/liveness
 
 CMD ["pnpm", "start:prod"]
