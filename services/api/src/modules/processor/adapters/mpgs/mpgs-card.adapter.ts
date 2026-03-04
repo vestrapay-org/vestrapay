@@ -93,11 +93,6 @@ export class MpgsCardAdapter implements ICardProcessor {
             },
         };
 
-        // Only include nameOnCard if it has a value
-        if (card.nameOnCard) {
-            cardData.nameOnCard = card.nameOnCard;
-        }
-
         const data = await this.mpgsRequest('PUT', `/session/${sessionId}`, {
             sourceOfFunds: {
                 provided: {

@@ -239,14 +239,26 @@ export class ApiKeyService implements IApiKeyService {
     }
 
     async validateXApiKeyGuard(request: IRequestApp): Promise<ApiKey> {
-        const xApiKeyHeader: string = this.apiKeyUtil
+        const rawHeader: string = this.apiKeyUtil
             .extractKeyFromRequest(request)
             ?.trim();
-        if (!xApiKeyHeader) {
+        if (!rawHeader) {
             throw new UnauthorizedException({
                 statusCode: EnumApiKeyStatusCodeError.xApiKeyRequired,
                 message: 'apiKey.error.xApiKey.required',
             });
+        }
+
+        // Support base64-encoded api key: decode if it doesn't contain ':'
+        let xApiKeyHeader = rawHeader;
+        if (!rawHeader.includes(':')) {
+            try {
+                xApiKeyHeader = Buffer.from(rawHeader, 'base64').toString(
+                    'utf-8'
+                );
+            } catch {
+                // not valid base64, use as-is
+            }
         }
 
         const xApiKey: string[] = xApiKeyHeader.split(':');

@@ -71,7 +71,6 @@ export class PaymentService {
             currency,
             email: dto.email,
             description: dto.description,
-            metadata: dto.metadata,
             ipAddress,
         });
 
@@ -88,7 +87,6 @@ export class PaymentService {
             cvv: dto.card.cvv,
             expiryMonth: dto.card.expiryMonth,
             expiryYear: dto.card.expiryYear,
-            nameOnCard: dto.card.nameOnCard,
         });
 
         const orderId = this.paymentUtil.generateOrderId();
@@ -128,7 +126,6 @@ export class PaymentService {
                 cvv: dto.card.cvv,
                 expiryMonth: dto.card.expiryMonth,
                 expiryYear: dto.card.expiryYear,
-                nameOnCard: dto.card.nameOnCard,
             });
             // Update the session ID for PAY
             await this.paymentRepository.updateTransaction(transaction.id, {

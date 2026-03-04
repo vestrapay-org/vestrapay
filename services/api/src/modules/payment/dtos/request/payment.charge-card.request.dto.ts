@@ -50,15 +50,6 @@ export class CardDetailsDto {
     @IsString()
     @Length(2, 2)
     expiryYear: string;
-
-    @ApiProperty({
-        description: 'Name on card',
-        example: 'John Doe',
-        required: false,
-    })
-    @IsOptional()
-    @IsString()
-    nameOnCard?: string;
 }
 
 export class PaymentChargeCardRequestDto {
@@ -109,12 +100,4 @@ export class PaymentChargeCardRequestDto {
     @ValidateNested()
     @Type(() => CardDetailsDto)
     card: CardDetailsDto;
-
-    @ApiProperty({
-        description: 'Additional metadata',
-        example: { orderId: '123' },
-        required: false,
-    })
-    @IsOptional()
-    metadata?: Record<string, unknown>;
 }

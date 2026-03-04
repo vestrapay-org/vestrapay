@@ -5,7 +5,7 @@ export interface ICardData {
     cvv: string;
     expiryMonth: string;
     expiryYear: string;
-    nameOnCard?: string;
+
 }
 
 export interface ICreateSessionResult {
