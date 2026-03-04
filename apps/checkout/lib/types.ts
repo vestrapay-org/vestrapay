@@ -12,6 +12,8 @@ export interface PaymentComponentProps {
   readonly reference: string;
   readonly email: string;
   readonly currency: string;
+  readonly onPaymentSuccess?: (reference: string) => void;
+  readonly onPaymentFailed?: (reference: string, errorMsg?: string) => void;
 }
 
 export interface Bank {

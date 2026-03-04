@@ -4,7 +4,6 @@ import type {
   ChargeCardRequest,
   ThreeDsCompleteData,
   ThreeDsCompleteRequest,
-  VerifyTransactionData,
 } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
@@ -47,14 +46,5 @@ export async function complete3ds(
   return apiFetch<ApiResponse<ThreeDsCompleteData>>(
     "/api/v1/public/payment/charge/card/3ds-complete",
     { body: req },
-  );
-}
-
-export async function verifyTransaction(
-  reference: string,
-): Promise<ApiResponse<VerifyTransactionData>> {
-  return apiFetch<ApiResponse<VerifyTransactionData>>(
-    `/api/v1/public/payment/verify/${encodeURIComponent(reference)}`,
-    { method: "GET" },
   );
 }
