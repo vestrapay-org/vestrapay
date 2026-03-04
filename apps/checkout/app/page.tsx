@@ -124,7 +124,13 @@ export default function CheckoutPage(): React.ReactNode {
               className="min-h-72 px-4 pt-4 pb-6 transition-opacity duration-150 ease-in-out sm:px-6 sm:pt-5"
               style={{ opacity: isTransitioning ? 0 : 1 }}
             >
-              <ActiveComponent amount={formattedAmount} reference={MERCHANT.reference} />
+              <ActiveComponent
+                amount={formattedAmount}
+                amountInSmallestUnit={MERCHANT.amount}
+                reference={MERCHANT.reference}
+                email={MERCHANT.email}
+                currency={MERCHANT.currency}
+              />
             </div>
           </div>
         </div>
