@@ -123,4 +123,7 @@ async function bootstrap(): Promise<void> {
 
     return;
 }
-bootstrap();
+bootstrap().catch(err => {
+    console.error('Bootstrap failed:', err);
+    process.exit(1);
+});
