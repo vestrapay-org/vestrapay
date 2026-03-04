@@ -43,8 +43,6 @@ export interface QRCell {
   readonly visible: boolean;
 }
 
-// ── Card Payment API Types ──────────────────────────────────────────────────
-
 export interface ChargeCardRequest {
   readonly amount: number;
   readonly currency: string;
@@ -85,3 +83,16 @@ export interface ThreeDsCompleteRequest {
 }
 
 export type ThreeDsCompleteData = ChargeCardData;
+
+export type VerifyTransactionStatus = "pending" | "processing" | "success" | "failed";
+
+export interface VerifyTransactionData {
+  readonly status: VerifyTransactionStatus;
+  readonly amount: number;
+  readonly currency: string;
+  readonly channel: string;
+  readonly reference: string;
+  readonly paidAt: string | null;
+  readonly fees: number;
+  readonly metadata: Record<string, unknown> | null;
+}
