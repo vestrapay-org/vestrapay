@@ -3,12 +3,12 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Lock, X } from "@/components/icons";
 import { CircleCheck, CircleX } from "@/components/icons";
-import { CardIcon } from "@/components/payment-icons";
+import { CardIcon, BankIcon, TransferIcon, USSDIcon, QRIcon } from "@/components/payment-icons";
 import { CardPayment } from "@/components/card-payment";
-// import { BankPayment } from "@/components/bank-payment";
-// import { TransferPayment } from "@/components/transfer-payment";
-// import { USSDPayment } from "@/components/ussd-payment";
-// import { QRCodePayment } from "@/components/qr-payment";
+import { BankPayment } from "@/components/bank-payment";
+import { TransferPayment } from "@/components/transfer-payment";
+import { USSDPayment } from "@/components/ussd-payment";
+import { QRCodePayment } from "@/components/qr-payment";
 import { MERCHANT } from "@/lib/constants";
 import { formatCurrency } from "@/lib/formatters";
 import type { PaymentMethod, PaymentComponentProps, SVGIconProps } from "@/lib/types";
@@ -21,21 +21,21 @@ interface PaymentMethodConfig {
 
 const PAYMENT_METHODS: readonly PaymentMethodConfig[] = [
   { id: "card", label: "Card", icon: CardIcon },
-  // { id: "bank", label: "Bank", icon: BankIcon },
-  // { id: "transfer", label: "Transfer", icon: TransferIcon },
-  // { id: "ussd", label: "USSD", icon: USSDIcon },
-  // { id: "qr", label: "QR Code", icon: QRIcon },
+  { id: "bank", label: "Bank", icon: BankIcon },
+  { id: "transfer", label: "Transfer", icon: TransferIcon },
+  { id: "ussd", label: "USSD", icon: USSDIcon },
+  { id: "qr", label: "QR Code", icon: QRIcon },
 ];
 
 const PAYMENT_COMPONENTS: Readonly<
   Record<PaymentMethod, React.ComponentType<PaymentComponentProps>>
 > = {
   card: CardPayment,
-  // bank: BankPayment,
-  // transfer: TransferPayment,
-  // ussd: USSDPayment,
-  // qr: QRCodePayment,
-} as unknown as Readonly<Record<PaymentMethod, React.ComponentType<PaymentComponentProps>>>;
+  bank: BankPayment,
+  transfer: TransferPayment,
+  ussd: USSDPayment,
+  qr: QRCodePayment,
+};
 
 const TRANSITION_DURATION = 150;
 
@@ -83,7 +83,7 @@ export default function CheckoutPage(): React.ReactNode {
 
   return (
     <main className="flex min-h-screen items-start justify-center bg-[#f6f9fc] p-0 sm:items-center sm:p-4">
-      <div className="w-full max-w-170">
+      <div className="w-full max-w-150">
         <div className="flex min-h-screen flex-col overflow-hidden bg-white sm:min-h-0 sm:flex-row sm:rounded-xl sm:border sm:border-[#e3e8ee]">
           {PAYMENT_METHODS.length > 1 && (
             <nav className="shrink-0 border-b border-[#e3e8ee] sm:w-45 sm:border-r sm:border-b-0 sm:py-6">
@@ -117,13 +117,8 @@ export default function CheckoutPage(): React.ReactNode {
           <div className="flex-1">
             {!paymentSuccess && !paymentFailed && (
               <div className="px-4 pt-4 pb-3 sm:px-6 sm:pt-6 sm:pb-5">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-[#3c4257] sm:text-[15px]">
-                      {MERCHANT.name}
-                    </p>
-                    <p className="mt-0.5 text-xs text-[#6b7c93] sm:text-sm">{MERCHANT.email}</p>
-                  </div>
+                <div className="mb-4 flex items-center justify-between pb-2">
+                  <img src="/vestrapay.svg" alt="Vestrapay" className="h-7 w-auto sm:h-8" />
                   <button
                     type="button"
                     className="flex size-8 cursor-pointer items-center justify-center rounded-full text-[#8898aa] transition-colors hover:bg-[#f6f9fc] hover:text-[#3c4257]"
@@ -131,6 +126,12 @@ export default function CheckoutPage(): React.ReactNode {
                   >
                     <X className="size-4" />
                   </button>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-[#3c4257] sm:text-[15px]">
+                    {MERCHANT.name}
+                  </p>
+                  <p className="mt-0.5 text-xs text-[#6b7c93] sm:text-sm">{MERCHANT.email}</p>
                 </div>
                 <p className="mt-2 text-2xl font-semibold tracking-tight text-[#3c4257] sm:mt-3 sm:text-[32px]">
                   {formattedAmount}
@@ -193,7 +194,7 @@ export default function CheckoutPage(): React.ReactNode {
 
         <div className="mt-5 flex items-center justify-center gap-1.5 pb-4 sm:pb-0">
           <Lock className="size-3 text-[#8898aa]/60" />
-          <span className="text-[11px] tracking-wide text-[#8898aa]">
+          <span className="flex items-center gap-1.5 text-[11px] tracking-wide text-[#8898aa]">
             Secured by <span className="text-primary font-semibold">Vestrapay</span>
           </span>
         </div>
