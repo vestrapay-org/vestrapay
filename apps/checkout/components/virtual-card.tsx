@@ -210,7 +210,7 @@ export function VirtualCard({
   isFlipped,
 }: VirtualCardProps): React.ReactNode {
   return (
-    <div className="card-perspective mb-3 h-44 w-full select-none sm:mb-4 sm:h-52">
+    <div className="card-perspective mx-auto mb-3 h-44 w-full max-w-xs select-none sm:mb-4 sm:h-48">
       <div
         className={`card-inner relative h-full w-full transition-transform duration-500 ${
           isFlipped ? "card-flipped" : ""
