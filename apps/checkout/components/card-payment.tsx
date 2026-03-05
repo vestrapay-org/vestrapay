@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import { Input } from "@vestrapay/ui/components/input";
 import { Label } from "@vestrapay/ui/components/label";
 import { Button } from "@vestrapay/ui/components/button";
-import { CreditCard } from "@/components/icons";
+import { CreditCard, Loader2 } from "@/components/icons";
 import { detectCardBrand, CardBrandIcon } from "@/components/card-brands";
 import { PaymentResult } from "@/components/payment-result";
 import { ThreeDsChallenge } from "@/components/three-ds-challenge";
@@ -114,16 +114,7 @@ export function CardPayment({
     setPhase({ step: "form" });
   }, []);
 
-  if (phase.step === "processing") {
-    return (
-      <PaymentResult
-        status="processing"
-        amount={amount}
-        reference={reference}
-        onClose={resetToForm}
-      />
-    );
-  }
+  const isProcessing = phase.step === "processing";
 
   if (phase.step === "3ds") {
     return (
@@ -244,10 +235,17 @@ export function CardPayment({
       <Button
         className="bg-primary text-primary-foreground hover:bg-primary/90 mt-1 h-10 w-full cursor-pointer rounded-lg text-sm font-semibold tracking-wide transition-all duration-200 disabled:opacity-40 sm:mt-2 sm:h-11 sm:text-[15px]"
         size="lg"
-        disabled={!isComplete}
+        disabled={!isComplete || isProcessing}
         onClick={handleCharge}
       >
-        {`Pay ${amount}`}
+        {isProcessing ? (
+          <span className="flex items-center gap-2">
+            <Loader2 className="size-4 animate-spin" />
+            Processing...
+          </span>
+        ) : (
+          `Pay ${amount}`
+        )}
       </Button>
     </div>
   );

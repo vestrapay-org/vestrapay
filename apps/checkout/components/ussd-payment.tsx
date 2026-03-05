@@ -51,14 +51,27 @@ export function USSDPayment({ amount, reference }: PaymentComponentProps): React
     );
   }
 
+  const [search, setSearch] = useState("");
+  const filtered = USSD_BANKS.filter((b) => b.name.toLowerCase().includes(search.toLowerCase()));
+
   return (
-    <div className="animate-in fade-in-0 slide-in-from-bottom-2 space-y-5 duration-300">
+    <div className="animate-in fade-in-0 slide-in-from-bottom-2 space-y-4 duration-300">
       <p className="text-sm leading-relaxed text-[#6b7c93]">
         Select your bank to generate a USSD code for this payment.
       </p>
 
-      <div className="grid grid-cols-2 gap-2 sm:gap-2">
-        {USSD_BANKS.map((bank) => (
+      <div className="relative">
+        <input
+          type="text"
+          placeholder="Search for your bank"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="h-11 w-full rounded-lg border border-[#e3e8ee] bg-white px-4 text-sm text-[#3c4257] transition-all duration-200 outline-none placeholder:text-[#a3acb9]"
+        />
+      </div>
+
+      <div className="stripe-scroll max-h-48 overflow-y-auto rounded-lg border border-[#e3e8ee] sm:max-h-55">
+        {filtered.map((bank, i) => (
           <button
             key={bank.code}
             type="button"
@@ -66,16 +79,22 @@ export function USSDPayment({ amount, reference }: PaymentComponentProps): React
               setSelected(bank.code);
               setUssdCode(null);
             }}
-            className={`flex cursor-pointer items-center gap-2.5 rounded-lg border-2 px-3.5 py-3 text-left text-sm transition-all duration-200 ${
+            className={`flex w-full cursor-pointer items-center justify-between px-4 py-3 text-left text-sm transition-all duration-150 ${
               selected === bank.code
-                ? "border-primary bg-primary/4 text-primary font-medium"
-                : "border-[#e3e8ee] text-[#3c4257] hover:border-[#cdd3da] hover:bg-[#f6f9fc]"
-            }`}
+                ? "bg-primary/4 text-primary font-medium"
+                : "text-[#3c4257] hover:bg-[#f6f9fc]"
+            } ${i !== filtered.length - 1 ? "border-b border-[#e3e8ee]" : ""}`}
           >
-            <Hash className="size-3.5 shrink-0 text-[#a3acb9]" />
-            <span className="truncate">{bank.name}</span>
+            <span className="flex items-center gap-2.5">
+              <Hash className="size-3.5 shrink-0 text-[#a3acb9]" />
+              {bank.name}
+            </span>
+            <span className="text-xs text-[#a3acb9]">{bank.ussd}</span>
           </button>
         ))}
+        {filtered.length === 0 && (
+          <div className="px-4 py-6 text-center text-sm text-[#a3acb9]">No banks found</div>
+        )}
       </div>
 
       {ussdCode && (
