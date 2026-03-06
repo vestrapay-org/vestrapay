@@ -3,6 +3,8 @@ import { IUssdProcessor } from '@modules/processor/interfaces/ussd-processor.int
 import {
     IUssdChargeParams,
     IUssdChargeResult,
+    IUssdCompleteParams,
+    IUssdCompleteResult,
     IUssdVerifyResult,
     IWebhookEvent,
 } from '@modules/processor/interfaces/processor-response.interface';
@@ -35,6 +37,18 @@ export class MockUssdAdapter implements IUssdProcessor {
         };
     }
 
+    async completeCharge(
+        params: IUssdCompleteParams
+    ): Promise<IUssdCompleteResult> {
+        this.logger.debug(`Mock: Completing USSD charge ${params.transactionId}`);
+
+        return {
+            status: 'success',
+            transactionId: params.transactionId,
+            amount: params.amount,
+        };
+    }
+
     async verifyCharge(reference: string): Promise<IUssdVerifyResult> {
         const charge = this.mockCharges.get(reference);
 
@@ -42,7 +56,6 @@ export class MockUssdAdapter implements IUssdProcessor {
             return { status: 'pending', amount: 0 };
         }
 
-        // Simulate: after first verify, mark as success
         if (charge.status === 'pending') {
             charge.status = 'success';
             return { status: 'pending', amount: charge.amount };

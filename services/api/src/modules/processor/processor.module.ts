@@ -5,8 +5,8 @@ import {
     USSD_PROCESSOR,
 } from '@modules/processor/constants/processor.constant';
 import { MpgsCardAdapter } from '@modules/processor/adapters/mpgs/mpgs-card.adapter';
-import { MockBankTransferAdapter } from '@modules/processor/adapters/mock/mock-bank-transfer.adapter';
-import { MockUssdAdapter } from '@modules/processor/adapters/mock/mock-ussd.adapter';
+import { AlatpayBankTransferAdapter } from '@modules/processor/adapters/alatpay/alatpay-bank-transfer.adapter';
+import { AlatpayUssdAdapter } from '@modules/processor/adapters/alatpay/alatpay-ussd.adapter';
 
 @Global()
 @Module({
@@ -17,11 +17,11 @@ import { MockUssdAdapter } from '@modules/processor/adapters/mock/mock-ussd.adap
         },
         {
             provide: BANK_TRANSFER_PROCESSOR,
-            useClass: MockBankTransferAdapter,
+            useClass: AlatpayBankTransferAdapter,
         },
         {
             provide: USSD_PROCESSOR,
-            useClass: MockUssdAdapter,
+            useClass: AlatpayUssdAdapter,
         },
     ],
     exports: [CARD_PROCESSOR, BANK_TRANSFER_PROCESSOR, USSD_PROCESSOR],

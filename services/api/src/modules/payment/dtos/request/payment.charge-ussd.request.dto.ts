@@ -1,22 +1,58 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import {
+    IsEmail,
+    IsNotEmpty,
+    IsNumber,
+    IsOptional,
+    IsString,
+    Min,
+} from 'class-validator';
 
 export class PaymentChargeUssdRequestDto {
     @ApiProperty({
-        description: 'Transaction reference from initialize',
-        example: 'VPY_ref_abc123',
+        description: 'Amount in kobo (100 = ₦1)',
+        example: 100000,
         required: true,
     })
     @IsNotEmpty()
-    @IsString()
-    reference: string;
+    @IsNumber()
+    @Min(100)
+    amount: number;
 
     @ApiProperty({
-        description: 'Bank code for USSD (optional)',
-        example: '058',
+        description: 'Currency code',
+        example: 'NGN',
+        required: false,
+        default: 'NGN',
+    })
+    @IsOptional()
+    @IsString()
+    currency?: string;
+
+    @ApiProperty({
+        description: 'Customer email address',
+        example: 'customer@example.com',
+        required: true,
+    })
+    @IsNotEmpty()
+    @IsEmail()
+    email: string;
+
+    @ApiProperty({
+        description: 'Payment description',
+        example: 'Payment for order #123',
         required: false,
     })
     @IsOptional()
     @IsString()
-    bankCode?: string;
+    description?: string;
+
+    @ApiProperty({
+        description: 'Customer phone number for direct debit',
+        example: '08134529895',
+        required: true,
+    })
+    @IsNotEmpty()
+    @IsString()
+    phoneNumber: string;
 }

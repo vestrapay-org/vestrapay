@@ -18,22 +18,22 @@ export class PaymentSystemController {
     constructor(private readonly paymentService: PaymentService) {}
 
     @HttpCode(HttpStatus.OK)
-    @Post('/webhook/anchor')
-    async anchorWebhook(
+    @Post('/webhook/alatpay/transfer')
+    async alatpayTransferWebhook(
         @Body() body: Record<string, unknown>,
         @Headers() headers: Record<string, string>
     ) {
-        await this.paymentService.handleAnchorWebhook(body, headers);
+        await this.paymentService.handleAlatpayWebhook(body, headers);
         return { data: { received: true } };
     }
 
     @HttpCode(HttpStatus.OK)
-    @Post('/webhook/korapay')
-    async korapayWebhook(
+    @Post('/webhook/alatpay/ussd')
+    async alatpayUssdWebhook(
         @Body() body: Record<string, unknown>,
         @Headers() headers: Record<string, string>
     ) {
-        await this.paymentService.handleKorapayWebhook(body, headers);
+        await this.paymentService.handleAlatpayUssdWebhook(body, headers);
         return { data: { received: true } };
     }
 }
