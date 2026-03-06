@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { createHmac } from 'crypto';
 import { IUssdProcessor } from '@modules/processor/interfaces/ussd-processor.interface';
 import {
     IUssdChargeParams,
@@ -16,6 +17,7 @@ export class AlatpayUssdAdapter implements IUssdProcessor {
     private readonly baseUrl: string;
     private readonly secretKey: string;
     private readonly businessId: string;
+    private readonly webhookSecret: string;
 
     constructor(private readonly configService: ConfigService) {
         this.baseUrl = this.configService.get<string>('payment.alatpay.baseUrl');
@@ -24,6 +26,9 @@ export class AlatpayUssdAdapter implements IUssdProcessor {
         );
         this.businessId = this.configService.get<string>(
             'payment.alatpay.businessId'
+        );
+        this.webhookSecret = this.configService.get<string>(
+            'payment.alatpay.webhookSecret'
         );
     }
 
@@ -179,11 +184,23 @@ export class AlatpayUssdAdapter implements IUssdProcessor {
 
     async validateWebhook(
         payload: Record<string, unknown>,
-        _headers: Record<string, string>
+        headers: Record<string, string>
     ): Promise<IWebhookEvent> {
         this.logger.debug(
             `AlatPay USSD webhook received: ${JSON.stringify(payload)}`
         );
+
+        if (this.webhookSecret) {
+            const signature = headers['x-alatpay-signature'] ?? headers['x-webhook-signature'] ?? '';
+            const expectedSignature = createHmac('sha512', this.webhookSecret)
+                .update(JSON.stringify(payload))
+                .digest('hex');
+
+            if (signature !== expectedSignature) {
+                this.logger.warn('AlatPay USSD webhook signature mismatch');
+                throw new UnauthorizedException('Invalid webhook signature');
+            }
+        }
 
         const data = payload.data as Record<string, unknown> | undefined;
 

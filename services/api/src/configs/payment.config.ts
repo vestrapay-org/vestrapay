@@ -17,6 +17,8 @@ export interface IConfigPayment {
         baseUrl: string;
         secretKey: string;
         businessId: string;
+        webhookUrl: string;
+        webhookSecret: string;
     };
     transaction: {
         timeoutMinutes: number;
@@ -55,6 +57,8 @@ export default registerAs(
                 'https://apibox.alatpay.ng',
             secretKey: process.env.ALATPAY_SECRET_KEY ?? '',
             businessId: process.env.ALATPAY_BUSINESS_ID ?? '',
+            webhookUrl: process.env.ALATPAY_WEBHOOK_URL ?? '',
+            webhookSecret: process.env.ALATPAY_WEBHOOK_SECRET ?? '',
         },
         transaction: {
             timeoutMinutes: parseInt(

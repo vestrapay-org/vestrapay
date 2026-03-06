@@ -258,6 +258,7 @@ export class PaymentService {
             channel: EnumTransactionChannel.bank_transfer,
             status: EnumTransactionStatus.processing,
             processorChannel: 'alatpay',
+            processorReference: virtualAccount.providerReference,
             fees,
             bankTransferAccountNumber: virtualAccount.accountNumber,
             bankTransferBankName: virtualAccount.bankName,
@@ -336,7 +337,7 @@ export class PaymentService {
         fees: number;
         metadata: unknown;
     }> {
-        const transaction =
+        let transaction =
             await this.paymentRepository.findTransactionByReference(reference);
 
         if (!transaction) {
@@ -344,6 +345,64 @@ export class PaymentService {
                 statusCode: EnumPaymentStatusCodeError.transactionNotFound,
                 message: 'payment.error.transactionNotFound',
             });
+        }
+
+        // Already settled — return immediately without calling AlatPay
+        if (transaction.status !== EnumTransactionStatus.processing) {
+            return {
+                status: transaction.status,
+                amount: transaction.amount,
+                currency: transaction.currency,
+                channel: transaction.channel,
+                reference: transaction.reference,
+                paidAt: transaction.paidAt,
+                fees: transaction.fees,
+                metadata: transaction.metadata,
+            };
+        }
+
+        // Still processing + AlatPay — check real status from AlatPay
+        if (transaction.processorChannel === 'alatpay') {
+            try {
+                let remoteStatus: 'success' | 'pending' | 'failed' = 'pending';
+
+                if (transaction.channel === EnumTransactionChannel.bank_transfer) {
+                    const result = await this.bankTransferProcessor.verifyPayment(
+                        transaction.processorReference ?? transaction.reference
+                    );
+                    remoteStatus = result.status;
+                } else if (transaction.channel === EnumTransactionChannel.ussd) {
+                    const result = await this.ussdProcessor.verifyCharge(
+                        transaction.processorReference ?? transaction.reference
+                    );
+                    remoteStatus = result.status;
+                }
+
+                if (remoteStatus === 'success') {
+                    await this.paymentRepository.updateTransaction(transaction.id, {
+                        status: EnumTransactionStatus.success,
+                        paidAt: new Date(),
+                        gatewayResponse: 'Verified via AlatPay API',
+                    });
+                    this.logger.log(`Payment verified via AlatPay: ${reference}`);
+                } else if (remoteStatus === 'failed') {
+                    await this.paymentRepository.updateTransaction(transaction.id, {
+                        status: EnumTransactionStatus.failed,
+                        failedAt: new Date(),
+                        gatewayResponse: 'Failed (verified via AlatPay API)',
+                    });
+                    this.logger.warn(`Payment failed via AlatPay: ${reference}`);
+                }
+
+                // Re-read to get updated values
+                if (remoteStatus !== 'pending') {
+                    transaction = await this.paymentRepository.findTransactionByReference(reference);
+                }
+            } catch (error) {
+                this.logger.warn(
+                    `AlatPay verify failed for ${reference}: ${error.message}`
+                );
+            }
         }
 
         return {
