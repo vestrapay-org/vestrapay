@@ -11,6 +11,9 @@ import { EnumDocRequestBodyType } from '@common/doc/enums/doc.enum';
 import { EnumPaymentStatusCodeError } from '@modules/payment/enums/payment.status-code.enum';
 import { PaymentChargeCardRequestDto } from '@modules/payment/dtos/request/payment.charge-card.request.dto';
 import { Payment3dsCompleteRequestDto } from '@modules/payment/dtos/request/payment.3ds-complete.request.dto';
+import { PaymentChargeBankTransferRequestDto } from '@modules/payment/dtos/request/payment.charge-bank-transfer.request.dto';
+import { PaymentChargeUssdRequestDto } from '@modules/payment/dtos/request/payment.charge-ussd.request.dto';
+import { PaymentCompleteUssdRequestDto } from '@modules/payment/dtos/request/payment.complete-ussd.request.dto';
 import { PaymentChargeCardResponseDto } from '@modules/payment/dtos/response/payment.charge-card.response.dto';
 import { PaymentVerifyResponseDto } from '@modules/payment/dtos/response/payment.verify.response.dto';
 
@@ -97,6 +100,105 @@ Returns \`400 transactionAlreadyProcessed\` if called more than once on the same
         }),
         DocResponse<PaymentChargeCardResponseDto>('payment.3dsComplete', {
             dto: PaymentChargeCardResponseDto,
+        }),
+        DocDefault({
+            httpStatus: HttpStatus.NOT_FOUND,
+            statusCode: EnumPaymentStatusCodeError.transactionNotFound,
+            messagePath: 'payment.error.transactionNotFound',
+        }),
+        DocDefault({
+            httpStatus: HttpStatus.BAD_REQUEST,
+            statusCode: EnumPaymentStatusCodeError.transactionAlreadyProcessed,
+            messagePath: 'payment.error.transactionAlreadyProcessed',
+        })
+    );
+}
+
+export function PaymentPublicChargeBankTransferDoc(): MethodDecorator {
+    return applyDecorators(
+        Doc({
+            summary: 'Charge via bank transfer',
+            description: `
+Creates a transaction and generates a temporary Wema Bank virtual account. The customer transfers the exact amount to the account to complete payment.
+
+**Flow:**
+1. Call this endpoint with amount and email.
+2. Display the returned \`accountNumber\`, \`bankName\`, and \`accountName\` to the customer.
+3. Customer transfers the exact amount from their bank app.
+4. AlatPay sends a webhook when payment is received, or poll \`GET /verify/:reference\`.
+
+**The virtual account expires after ~24 hours** (see \`expiresAt\`).
+
+**Amount:** Always the smallest currency unit — ₦1,000 = \`100000\` (kobo).
+            `.trim(),
+        }),
+        DocAuth({ xApiKey: true }),
+        DocRequest({
+            bodyType: EnumDocRequestBodyType.json,
+            dto: PaymentChargeBankTransferRequestDto,
+        }),
+        DocDefault({
+            httpStatus: HttpStatus.NOT_FOUND,
+            statusCode: EnumPaymentStatusCodeError.merchantNotFound,
+            messagePath: 'payment.error.merchantNotFound',
+        })
+    );
+}
+
+export function PaymentPublicChargeUssdDoc(): MethodDecorator {
+    return applyDecorators(
+        Doc({
+            summary: 'Charge via phone number (USSD)',
+            description: `
+Creates a transaction and initiates a phone-number direct debit via AlatPay. A prompt is sent to the customer's phone to authorize the payment.
+
+**Flow:**
+1. Call this endpoint with amount, email, and phoneNumber.
+2. The response returns \`status: "pending"\` and a \`reference\`.
+3. Call \`POST /charge/ussd/complete\` with the reference and phoneNumber to trigger the phone prompt.
+4. The customer approves on their phone.
+5. AlatPay sends a webhook, or poll \`GET /verify/:reference\`.
+
+**Amount:** Always the smallest currency unit — ₦1,000 = \`100000\` (kobo).
+            `.trim(),
+        }),
+        DocAuth({ xApiKey: true }),
+        DocRequest({
+            bodyType: EnumDocRequestBodyType.json,
+            dto: PaymentChargeUssdRequestDto,
+        }),
+        DocDefault({
+            httpStatus: HttpStatus.NOT_FOUND,
+            statusCode: EnumPaymentStatusCodeError.merchantNotFound,
+            messagePath: 'payment.error.merchantNotFound',
+        })
+    );
+}
+
+export function PaymentPublicCompleteUssdDoc(): MethodDecorator {
+    return applyDecorators(
+        Doc({
+            summary: 'Complete a phone number payment',
+            description: `
+Triggers the phone prompt for a previously initialized phone-number payment.
+
+**Only call this after \`POST /charge/ussd\` returned a reference.**
+
+The customer will receive a prompt on their phone to approve the debit. Poll \`GET /verify/:reference\` or wait for the webhook to confirm the result.
+
+**Response statuses:**
+
+| status | Meaning |
+|--------|---------|
+| \`success\` | Payment approved immediately |
+| \`pending\` | Prompt sent to phone, awaiting approval |
+| \`failed\` | Payment declined |
+            `.trim(),
+        }),
+        DocAuth({ xApiKey: true }),
+        DocRequest({
+            bodyType: EnumDocRequestBodyType.json,
+            dto: PaymentCompleteUssdRequestDto,
         }),
         DocDefault({
             httpStatus: HttpStatus.NOT_FOUND,
