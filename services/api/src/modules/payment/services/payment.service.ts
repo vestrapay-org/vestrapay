@@ -220,42 +220,44 @@ export class PaymentService {
         accountName: string;
         expiresAt: Date;
     }> {
-        const transaction =
-            await this.paymentRepository.findTransactionByReference(
-                dto.reference
-            );
-
-        if (!transaction) {
+        const merchant = await this.paymentRepository.findDefaultMerchant();
+        if (!merchant) {
             throw new NotFoundException({
-                statusCode: EnumPaymentStatusCodeError.transactionNotFound,
-                message: 'payment.error.transactionNotFound',
+                statusCode: EnumPaymentStatusCodeError.merchantNotFound,
+                message: 'payment.error.merchantNotFound',
             });
         }
 
-        if (transaction.status !== EnumTransactionStatus.pending) {
-            throw new BadRequestException({
-                statusCode:
-                    EnumPaymentStatusCodeError.transactionAlreadyProcessed,
-                message: 'payment.error.transactionAlreadyProcessed',
-            });
-        }
+        const reference = this.paymentUtil.generateReference();
+        const currency = dto.currency ?? 'NGN';
+
+        const transaction = await this.paymentRepository.createTransaction({
+            merchantId: merchant.id,
+            reference,
+            amount: dto.amount,
+            currency,
+            email: dto.email,
+            description: dto.description,
+        });
+
+        this.logger.log(
+            `Bank transfer charge started: ${reference} for ${dto.amount} ${currency}`
+        );
 
         const virtualAccount =
             await this.bankTransferProcessor.createVirtualAccount({
-                amount: transaction.amount,
-                currency: transaction.currency,
-                customerEmail: transaction.email ?? '',
-                reference: dto.reference,
+                amount: dto.amount,
+                currency,
+                customerEmail: dto.email,
+                reference,
             });
 
-        const fees = this.paymentUtil.calculateTransferInflowFee(
-            transaction.amount
-        );
+        const fees = this.paymentUtil.calculateTransferInflowFee(dto.amount);
 
         await this.paymentRepository.updateTransaction(transaction.id, {
             channel: EnumTransactionChannel.bank_transfer,
             status: EnumTransactionStatus.processing,
-            processorChannel: 'anchor',
+            processorChannel: 'alatpay',
             fees,
             bankTransferAccountNumber: virtualAccount.accountNumber,
             bankTransferBankName: virtualAccount.bankName,
@@ -264,7 +266,7 @@ export class PaymentService {
 
         return {
             status: 'awaiting_transfer',
-            reference: dto.reference,
+            reference,
             accountNumber: virtualAccount.accountNumber,
             bankName: virtualAccount.bankName,
             accountName: virtualAccount.accountName,
@@ -277,45 +279,49 @@ export class PaymentService {
         reference: string;
         ussdCode: string;
     }> {
-        const transaction =
-            await this.paymentRepository.findTransactionByReference(
-                dto.reference
-            );
-
-        if (!transaction) {
+        const merchant = await this.paymentRepository.findDefaultMerchant();
+        if (!merchant) {
             throw new NotFoundException({
-                statusCode: EnumPaymentStatusCodeError.transactionNotFound,
-                message: 'payment.error.transactionNotFound',
+                statusCode: EnumPaymentStatusCodeError.merchantNotFound,
+                message: 'payment.error.merchantNotFound',
             });
         }
 
-        if (transaction.status !== EnumTransactionStatus.pending) {
-            throw new BadRequestException({
-                statusCode:
-                    EnumPaymentStatusCodeError.transactionAlreadyProcessed,
-                message: 'payment.error.transactionAlreadyProcessed',
-            });
-        }
+        const reference = this.paymentUtil.generateReference();
+        const currency = dto.currency ?? 'NGN';
+
+        const transaction = await this.paymentRepository.createTransaction({
+            merchantId: merchant.id,
+            reference,
+            amount: dto.amount,
+            currency,
+            email: dto.email,
+            description: dto.description,
+        });
+
+        this.logger.log(
+            `USSD charge started: ${reference} for ${dto.amount} ${currency}`
+        );
 
         const ussdResult = await this.ussdProcessor.initiateCharge({
-            amount: transaction.amount,
-            currency: transaction.currency,
-            email: transaction.email ?? '',
-            reference: dto.reference,
-            bankCode: dto.bankCode,
+            amount: dto.amount,
+            currency,
+            email: dto.email,
+            reference,
+            phoneNumber: dto.phoneNumber,
         });
 
         await this.paymentRepository.updateTransaction(transaction.id, {
             channel: EnumTransactionChannel.ussd,
             status: EnumTransactionStatus.processing,
-            processorChannel: 'korapay',
+            processorChannel: 'alatpay',
             processorReference: ussdResult.processorReference,
             ussdCode: ussdResult.ussdCode,
         });
 
         return {
             status: 'pending',
-            reference: dto.reference,
+            reference,
             ussdCode: ussdResult.ussdCode,
         };
     }
@@ -352,7 +358,66 @@ export class PaymentService {
         };
     }
 
-    async handleAnchorWebhook(
+    async completeUssd(
+        reference: string,
+        phoneNumber: string
+    ): Promise<{ status: string; reference: string }> {
+        const transaction =
+            await this.paymentRepository.findTransactionByReference(reference);
+
+        if (!transaction) {
+            throw new NotFoundException({
+                statusCode: EnumPaymentStatusCodeError.transactionNotFound,
+                message: 'payment.error.transactionNotFound',
+            });
+        }
+
+        if (transaction.status !== EnumTransactionStatus.processing) {
+            throw new BadRequestException({
+                statusCode:
+                    EnumPaymentStatusCodeError.transactionAlreadyProcessed,
+                message: 'payment.error.transactionAlreadyProcessed',
+            });
+        }
+
+        if (!transaction.processorReference) {
+            throw new BadRequestException({
+                statusCode: EnumPaymentStatusCodeError.processorError,
+                message: 'payment.error.processorError',
+            });
+        }
+
+        const result = await this.ussdProcessor.completeCharge({
+            phoneNumber,
+            amount: transaction.amount,
+            currency: transaction.currency,
+            transactionId: transaction.processorReference,
+        });
+
+        if (result.status === 'success') {
+            await this.paymentRepository.updateTransaction(transaction.id, {
+                status: EnumTransactionStatus.success,
+                paidAt: new Date(),
+            });
+            this.logger.log(`Phone payment successful: ${reference}`);
+            return { status: 'success', reference };
+        }
+
+        if (result.status === 'failed') {
+            await this.paymentRepository.updateTransaction(transaction.id, {
+                status: EnumTransactionStatus.failed,
+                failedAt: new Date(),
+            });
+            this.logger.warn(`Phone payment failed: ${reference}`);
+            return { status: 'failed', reference };
+        }
+
+        // Still pending — a phone prompt was sent
+        this.logger.log(`Phone payment pending (prompt sent): ${reference}`);
+        return { status: 'pending', reference };
+    }
+
+    async handleAlatpayWebhook(
         payload: Record<string, unknown>,
         headers: Record<string, string>
     ): Promise<void> {
@@ -376,7 +441,7 @@ export class PaymentService {
         }
     }
 
-    async handleKorapayWebhook(
+    async handleAlatpayUssdWebhook(
         payload: Record<string, unknown>,
         headers: Record<string, string>
     ): Promise<void> {
@@ -404,11 +469,11 @@ export class PaymentService {
                             ? new Date()
                             : undefined,
                     processorResponse: event.raw,
-                    gatewayResponse: `USSD payment ${event.status}`,
+                    gatewayResponse: `Phone payment ${event.status}`,
                 }
             );
             this.logger.log(
-                `USSD payment ${event.status} for reference: ${event.reference}`
+                `Phone payment ${event.status} for reference: ${event.reference}`
             );
         }
     }

@@ -101,22 +101,6 @@ export interface IVerifyPaymentResult {
     providerReference?: string;
 }
 
-export interface IBankInfo {
-    name: string;
-    code: string;
-    slug: string;
-    longCode?: string;
-    country: string;
-    currency: string;
-    type?: string;
-}
-
-export interface IAccountResolveResult {
-    accountName: string;
-    accountNumber: string;
-    bankCode: string;
-}
-
 // ─── USSD Processor Types ───────────────────────────────────────────────────
 
 export interface IUssdChargeParams {
@@ -124,7 +108,7 @@ export interface IUssdChargeParams {
     currency: string;
     email: string;
     reference: string;
-    bankCode?: string;
+    phoneNumber: string;
 }
 
 export interface IUssdChargeResult {
@@ -137,6 +121,19 @@ export interface IUssdVerifyResult {
     status: 'success' | 'pending' | 'failed';
     amount: number;
     paidAt?: Date;
+}
+
+export interface IUssdCompleteParams {
+    phoneNumber: string;
+    amount: number;
+    currency: string;
+    transactionId: string;
+}
+
+export interface IUssdCompleteResult {
+    status: 'success' | 'pending' | 'failed';
+    transactionId: string;
+    amount: number;
 }
 
 // ─── Webhook Types ──────────────────────────────────────────────────────────

@@ -13,14 +13,10 @@ export interface IConfigPayment {
         apiPassword: string;
         version: number;
     };
-    korapay: {
+    alatpay: {
         baseUrl: string;
         secretKey: string;
-        encryptionKey: string;
-    };
-    anchor: {
-        baseUrl: string;
-        apiKey: string;
+        businessId: string;
     };
     transaction: {
         timeoutMinutes: number;
@@ -53,18 +49,12 @@ export default registerAs(
             apiPassword: process.env.MPGS_API_PASSWORD ?? '',
             version: parseInt(process.env.MPGS_VERSION ?? '82'),
         },
-        korapay: {
+        alatpay: {
             baseUrl:
-                process.env.KORAPAY_BASE_URL ??
-                'https://api.korapay.com/merchant/api/v1',
-            secretKey: process.env.KORAPAY_SECRET_KEY ?? '',
-            encryptionKey: process.env.KORAPAY_ENCRYPTION_KEY ?? '',
-        },
-        anchor: {
-            baseUrl:
-                process.env.ANCHOR_BASE_URL ??
-                'https://api.sandbox.getanchor.co/api/v1',
-            apiKey: process.env.ANCHOR_API_KEY ?? '',
+                process.env.ALATPAY_BASE_URL ??
+                'https://apibox.alatpay.ng',
+            secretKey: process.env.ALATPAY_SECRET_KEY ?? '',
+            businessId: process.env.ALATPAY_BUSINESS_ID ?? '',
         },
         transaction: {
             timeoutMinutes: parseInt(

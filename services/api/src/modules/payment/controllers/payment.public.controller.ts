@@ -2,6 +2,7 @@ import {
     Body,
     Controller,
     Get,
+    Headers,
     HttpCode,
     HttpStatus,
     Param,
@@ -17,6 +18,7 @@ import { PaymentChargeCardRequestDto } from '@modules/payment/dtos/request/payme
 import { PaymentChargeBankTransferRequestDto } from '@modules/payment/dtos/request/payment.charge-bank-transfer.request.dto';
 import { PaymentChargeUssdRequestDto } from '@modules/payment/dtos/request/payment.charge-ussd.request.dto';
 import { Payment3dsCompleteRequestDto } from '@modules/payment/dtos/request/payment.3ds-complete.request.dto';
+import { PaymentCompleteUssdRequestDto } from '@modules/payment/dtos/request/payment.complete-ussd.request.dto';
 import { Response as ExpressResponse } from 'express';
 import {
     PaymentPublicChargeCardDoc,
@@ -190,7 +192,6 @@ ss(JSON.stringify(d),'e');
 </html>`);
     }
 
-    @ApiExcludeEndpoint()
     @Response('payment.chargeBankTransfer')
     @ApiKeyProtected()
     @HttpCode(HttpStatus.OK)
@@ -203,13 +204,49 @@ ss(JSON.stringify(d),'e');
         };
     }
 
-    @ApiExcludeEndpoint()
     @Response('payment.chargeUssd')
     @ApiKeyProtected()
     @HttpCode(HttpStatus.OK)
     @Post('/charge/ussd')
     async chargeUssd(@Body() body: PaymentChargeUssdRequestDto) {
         return { data: await this.paymentService.chargeUssd(body) };
+    }
+
+    @Response('payment.completeUssd')
+    @ApiKeyProtected()
+    @HttpCode(HttpStatus.OK)
+    @Post('/charge/ussd/complete')
+    async completeUssd(@Body() body: PaymentCompleteUssdRequestDto) {
+        return {
+            data: await this.paymentService.completeUssd(
+                body.reference,
+                body.phoneNumber
+            ),
+        };
+    }
+
+    @ApiExcludeEndpoint()
+    @HttpCode(HttpStatus.OK)
+    @Post('/webhook/alatpay')
+    async alatpayWebhook(
+        @Body() body: Record<string, unknown>,
+        @Headers() headers: Record<string, string>
+    ) {
+        // Determine channel from payload and route to appropriate handler
+        const data = body.data as Record<string, unknown> | undefined;
+        const channel = (data?.channel as string) ?? '';
+
+        if (
+            channel === 'ussd' ||
+            channel === 'phone' ||
+            channel === 'phone_number'
+        ) {
+            await this.paymentService.handleAlatpayUssdWebhook(body, headers);
+        } else {
+            await this.paymentService.handleAlatpayWebhook(body, headers);
+        }
+
+        return { status: 'ok' };
     }
 
     @PaymentPublicVerifyDoc()

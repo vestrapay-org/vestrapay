@@ -1,6 +1,4 @@
 import {
-    IAccountResolveResult,
-    IBankInfo,
     IVerifyPaymentResult,
     IVirtualAccountParams,
     IVirtualAccountResult,
@@ -13,13 +11,6 @@ export interface IBankTransferProcessor {
     ): Promise<IVirtualAccountResult>;
 
     verifyPayment(paymentId: string): Promise<IVerifyPaymentResult>;
-
-    listBanks(): Promise<IBankInfo[]>;
-
-    resolveAccount(
-        bankCode: string,
-        accountNumber: string
-    ): Promise<IAccountResolveResult>;
 
     validateWebhook(
         payload: Record<string, unknown>,
