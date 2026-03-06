@@ -22,7 +22,10 @@ import { PaymentCompleteUssdRequestDto } from '@modules/payment/dtos/request/pay
 import { Response as ExpressResponse } from 'express';
 import {
     PaymentPublicChargeCardDoc,
+    PaymentPublicChargeBankTransferDoc,
+    PaymentPublicChargeUssdDoc,
     PaymentPublicComplete3dsDoc,
+    PaymentPublicCompleteUssdDoc,
     PaymentPublicVerifyDoc,
 } from '@modules/payment/docs/payment.public.doc';
 
@@ -192,6 +195,7 @@ ss(JSON.stringify(d),'e');
 </html>`);
     }
 
+    @PaymentPublicChargeBankTransferDoc()
     @Response('payment.chargeBankTransfer')
     @ApiKeyProtected()
     @HttpCode(HttpStatus.OK)
@@ -204,6 +208,7 @@ ss(JSON.stringify(d),'e');
         };
     }
 
+    @PaymentPublicChargeUssdDoc()
     @Response('payment.chargeUssd')
     @ApiKeyProtected()
     @HttpCode(HttpStatus.OK)
@@ -212,6 +217,7 @@ ss(JSON.stringify(d),'e');
         return { data: await this.paymentService.chargeUssd(body) };
     }
 
+    @PaymentPublicCompleteUssdDoc()
     @Response('payment.completeUssd')
     @ApiKeyProtected()
     @HttpCode(HttpStatus.OK)
