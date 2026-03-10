@@ -1,6 +1,6 @@
 [build]
 dockerfilePath = "services/api/dockerfile"
-dockerContext = "."
+dockerContext = "services/api"
 watchPatterns = ["services/api/**"]
 
 [deploy]
