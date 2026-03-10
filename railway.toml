@@ -1,7 +1,7 @@
 [build]
-dockerfilePath = "dockerfile"
-dockerContext = "services/api"
-watchPatterns = ["services/api/**"]
+dockerfilePath = "services/api/ci/dockerfile"
+dockerContext = "."
+watchPatterns = ["services/api/**", "pnpm-lock.yaml"]
 
 [deploy]
 healthcheckPath = "/api/public/health/liveness"

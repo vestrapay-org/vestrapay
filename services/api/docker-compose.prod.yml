@@ -4,6 +4,7 @@ services:
     migrator:
         image: ${IMAGE_PREFIX:-vestrapay}-builder:latest
         container_name: vestrapay-migrator
+        profiles: ["migration"]
         command: ["pnpm", "exec", "prisma", "db", "push", "--accept-data-loss"]
         env_file: .env
         networks:
@@ -19,6 +20,7 @@ services:
     seeder:
         image: ${IMAGE_PREFIX:-vestrapay}-builder:latest
         container_name: vestrapay-seeder
+        profiles: ["migration"]
         command: >
             sh -c "node dist/migration.js apiKey --type seed &&
                    node dist/migration.js featureFlag --type seed &&
@@ -51,8 +53,6 @@ services:
         networks:
             - app-network
         depends_on:
-            seeder:
-                condition: service_completed_successfully
             redis:
                 condition: service_healthy
             jwks-server:

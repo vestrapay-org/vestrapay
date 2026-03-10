@@ -7,6 +7,7 @@ on:
       - main
     paths:
       - 'services/api/**'
+      - 'pnpm-lock.yaml'
       - '.github/workflows/deploy-api.yml'
 
 env:
@@ -38,24 +39,24 @@ jobs:
       - name: Build and push builder image (migrator + seeder)
         uses: docker/build-push-action@v6
         with:
-          context: services/api
+          context: .
           file: services/api/ci/dockerfile
           target: builder
           push: true
           tags: ${{ env.IMAGE_PREFIX }}-builder:latest,${{ env.IMAGE_PREFIX }}-builder:${{ github.sha }}
-          cache-from: type=gha,scope=builder
-          cache-to: type=gha,scope=builder,mode=max
+          cache-from: type=gha,scope=api-build
+          cache-to: type=gha,scope=api-build,mode=max
 
-      - name: Build and push API image
+      - name: Build and push API runtime image
         uses: docker/build-push-action@v6
         with:
-          context: services/api
+          context: .
           file: services/api/ci/dockerfile
-          target: main
+          target: runtime
           push: true
           tags: ${{ env.IMAGE_PREFIX }}-api:latest,${{ env.IMAGE_PREFIX }}-api:${{ github.sha }}
-          cache-from: type=gha,scope=builder
-          cache-to: type=gha,scope=api,mode=max
+          cache-from: type=gha,scope=api-build
+          cache-to: type=gha,scope=api-runtime,mode=max
 
       - name: Prepare config files
         id: configs
@@ -80,9 +81,6 @@ jobs:
 
             export IMAGE_PREFIX="${IMAGE_PREFIX}"
 
-            echo "-> Stopping running services (preserving volumes)..."
-            cd /opt/vestrapay 2>/dev/null && docker compose down 2>/dev/null || true
-
             echo "-> Writing config files..."
             mkdir -p /opt/vestrapay/keys
             echo "${COMPOSE_B64}" | base64 -d > /opt/vestrapay/docker-compose.yml
@@ -95,9 +93,6 @@ jobs:
             cd /opt/vestrapay
             docker compose pull
 
-            echo "-> Cleaning up dangling images..."
-            docker image prune -f
-
             echo "-> Checking .env exists..."
             if [ ! -f /opt/vestrapay/.env ]; then
               echo "ERROR: /opt/vestrapay/.env not found. Create it on the VPS first."
@@ -109,13 +104,21 @@ jobs:
               echo "  postgres_data volume exists and will be preserved" || \
               echo "  postgres_data volume does not exist (first deploy)"
 
-            echo "-> Starting services (migrator -> seeder -> API)..."
-            docker compose up -d --force-recreate
+            echo "-> Running migrations..."
+            if ! docker compose run --rm migrator; then
+              echo "Migration failed! Aborting deployment."
+              exit 1
+            fi
+            if ! docker compose run --rm seeder; then
+              echo "Seeder failed! Aborting deployment."
+              exit 1
+            fi
 
-            echo "-> Waiting for API to be healthy..."
-            timeout 120 sh -c 'until docker compose ps api | grep -q "healthy"; do sleep 5; done' || echo "Warning: API health check timed out"
+            echo "-> Rolling restart of API..."
+            docker compose up -d --no-deps --wait api
 
-            echo "-> Cleaning up init containers..."
+            echo "-> Cleaning up..."
             docker compose rm -f migrator seeder 2>/dev/null || true
+            docker image prune -f
 
             echo "-> Done."

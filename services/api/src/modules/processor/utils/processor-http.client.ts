@@ -33,7 +33,9 @@ export class ProcessorHttpClient {
         const data = (await response.json()) as Record<string, unknown>;
 
         if (!response.ok) {
-            this.logger.error(`HTTP ${response.status} on ${method} ${path}`);
+            this.logger.error(
+                `HTTP ${response.status} on ${method} ${path}: ${JSON.stringify(data)}`
+            );
         }
 
         return data;

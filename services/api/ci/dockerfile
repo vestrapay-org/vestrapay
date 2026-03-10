@@ -1,45 +1,40 @@
-# Build stage base
+# ── Base ──────────────────────────────────────────────────────────
 FROM node:24-alpine AS base
-LABEL maintainer="dev@vestrapay.io"
-ARG NODE_ENV
-ENV NODE_ENV=${NODE_ENV}
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
+
+# ── Dependencies ──────────────────────────────────────────────────
+FROM base AS deps
 WORKDIR /app
+COPY pnpm-lock.yaml pnpm-workspace.yaml .npmrc package.json ./
+COPY services/api/package.json ./services/api/package.json
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile --filter=@vestrapay/api
 
-# Builder stage — install deps (cached layer), then build
-# Also used for migrator + seeder via command override in docker-compose
-FROM base AS builder
-COPY package.json ./
-RUN set -x && pnpm install --ignore-scripts
-
-COPY . .
-
-RUN pnpm db:generate
+# ── Builder (also used by migrator + seeder via docker-compose) ──
+FROM deps AS builder
+COPY services/api/ ./services/api/
+WORKDIR /app/services/api
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm db:generate
 RUN pnpm build
+RUN pnpm deploy --legacy --filter=@vestrapay/api --prod /app/deployed
 
-# Production stage — slim image for API runtime
-FROM base AS main
-COPY package.json ./
-RUN set -x && pnpm install --prod --ignore-scripts
+# ── Runtime ───────────────────────────────────────────────────────
+FROM node:24-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
 
-# Copy only necessary files from builder
-COPY --from=builder /app/generated/prisma-client ./generated/prisma-client
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/deployed/node_modules ./node_modules
+COPY --from=builder /app/services/api/dist ./dist
+COPY --from=builder /app/services/api/generated/prisma-client ./generated/prisma-client
+COPY --from=builder /app/services/api/prisma ./prisma
+COPY --from=builder /app/services/api/package.json ./package.json
 
-# Copy entrypoint and create .env before switching user
-COPY --from=builder /app/ci/entrypoint.sh ./entrypoint.sh
-RUN touch .env
-
-# Create non-root user for security
-RUN addgroup -S ec2-user && adduser -S ec2-user -G ec2-user && \
-    chown -R ec2-user:ec2-user /app
-USER ec2-user
+RUN addgroup -S appuser && adduser -S appuser -G appuser && \
+    chown -R appuser:appuser /app
+USER appuser
 EXPOSE 3000
 
-# Add healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/public/health/liveness
-
-ENTRYPOINT ["sh", "./entrypoint.sh"]
+CMD ["node", "dist/main"]

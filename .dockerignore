@@ -1,0 +1,23 @@
+# Dependencies & build artifacts (each Dockerfile installs its own)
+**/node_modules/
+**/dist/
+**/generated/
+**/coverage/
+**/.turbo/
+
+# Sensitive files
+**/.env*
+!**/.env.example
+
+# Git & OS
+**/.git
+**/.DS_Store
+
+# Logs
+**/*.log
+**/logs/
+
+# Dev tooling (not needed in Docker)
+**/.husky/
+**/.vscode/
+**/.idea/
