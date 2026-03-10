@@ -4,7 +4,7 @@ services:
     migrator:
         image: ${IMAGE_PREFIX:-vestrapay}-builder:latest
         container_name: vestrapay-migrator
-        command: ["pnpm", "exec", "prisma", "db", "push"]
+        command: ["pnpm", "exec", "prisma", "db", "push", "--accept-data-loss"]
         env_file: .env
         networks:
             - app-network
