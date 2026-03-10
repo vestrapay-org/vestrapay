@@ -31,7 +31,6 @@ async function bootstrap(): Promise<void> {
     )!;
     const version: string = configService.get<string>('app.urlVersion.version')!;
     const appName: string = configService.get<string>('app.name')!;
-    const databaseUrl = configService.get<string>('database.url');
     const databaseDebug = configService.get<boolean>('database.debug');
     const loggerAuto = configService.get<boolean>('logger.auto');
     const loggerDebugEnable = configService.get<boolean>('logger.enable');
@@ -117,7 +116,6 @@ async function bootstrap(): Promise<void> {
         `App URL: http://${host}:${port}${globalPrefix}`,
         'NestApplication'
     );
-    logger.log(`Database URL: ${databaseUrl}`, 'NestApplication');
     logger.log(`Database Debug: ${databaseDebug}`, 'NestApplication');
     logger.log(`Logger Auto: ${loggerAuto}`, 'NestApplication');
     logger.log(`Logger Debug Enable: ${loggerDebugEnable}`, 'NestApplication');

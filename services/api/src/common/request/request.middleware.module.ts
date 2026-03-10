@@ -61,6 +61,6 @@ export class RequestMiddlewareModule implements NestModule {
                 RequestCustomLanguageMiddleware,
                 RequestCompressionMiddleware
             )
-            .forRoutes('*');
+            .forRoutes('*path');
     }
 }
