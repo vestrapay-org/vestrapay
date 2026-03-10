@@ -1,50 +1,19 @@
-FROM node:lts-alpine AS base
+FROM node:lts-alpine
 LABEL maintainer="dev@vestrapay.io"
 
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@10.26.2 --activate
+RUN corepack enable && corepack prepare pnpm@latest --activate
+COPY package.json pnpm-lock.yaml ./
 
-# --- Dependencies ---
-FROM base AS deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY services/api/package.json ./services/api/
-COPY apps/admin/package.json ./apps/admin/
-COPY apps/app/package.json ./apps/app/
-COPY apps/checkout/package.json ./apps/checkout/
-COPY apps/web/package.json ./apps/web/
-COPY packages/eslint-config/package.json ./packages/eslint-config/
-COPY packages/typescript-config/package.json ./packages/typescript-config/
-COPY packages/ui/package.json ./packages/ui/
-RUN set -x && pnpm install --frozen-lockfile --ignore-scripts --filter @vestrapay/api...
+RUN set -x && pnpm install --frozen-lockfile
 
-# --- Builder ---
-FROM deps AS builder
-COPY services/api/ ./services/api/
-WORKDIR /app/services/api
-RUN pnpm db:generate
-RUN pnpm build
-
-# --- Production ---
-FROM base AS production
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY services/api/package.json ./services/api/
-COPY apps/admin/package.json ./apps/admin/
-COPY apps/app/package.json ./apps/app/
-COPY apps/checkout/package.json ./apps/checkout/
-COPY apps/web/package.json ./apps/web/
-COPY packages/eslint-config/package.json ./packages/eslint-config/
-COPY packages/typescript-config/package.json ./packages/typescript-config/
-COPY packages/ui/package.json ./packages/ui/
-RUN pnpm install --frozen-lockfile --prod --ignore-scripts --filter @vestrapay/api...
-COPY --from=builder /app/services/api/dist ./services/api/dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/services/api/prisma ./services/api/prisma
-
-WORKDIR /app/services/api
 RUN touch .env
+
+COPY . .
+
+RUN pnpm db:generate
 
 EXPOSE 3000
 
-CMD [ "node", "dist/main" ]
+CMD [ "pnpm", "start:dev" ]
