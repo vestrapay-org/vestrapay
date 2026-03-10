@@ -33,7 +33,7 @@ export class ApiKeyRepository {
                     ...where,
                     ...isActive,
                     ...type,
-                },
+                } as IPaginationQueryOffsetParams['where'],
                 orderBy: {
                     createdAt: EnumPaginationOrderDirectionType.desc,
                 },
@@ -48,7 +48,7 @@ export class ApiKeyRepository {
     ): Promise<ApiKey> {
         return this.databaseService.apiKey.create({
             data: {
-                name,
+                name: name!,
                 key,
                 hash,
                 isActive: true,

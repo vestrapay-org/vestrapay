@@ -73,13 +73,13 @@ export class ApiKeyService implements IApiKeyService {
                         ? this.helperService.dateCreate(startAt, {
                               dayOf: EnumHelperDateDayOf.start,
                           })
-                        : null,
+                        : undefined,
                 endAt:
                     startAt && endAt
                         ? this.helperService.dateCreate(endAt, {
                               dayOf: EnumHelperDateDayOf.end,
                           })
-                        : null,
+                        : undefined,
             },
             key,
             hash
@@ -130,7 +130,7 @@ export class ApiKeyService implements IApiKeyService {
         this.validateApiKey(apiKey, true);
 
         const [updated] = await Promise.all([
-            this.apiKeyRepository.updateName(id, name),
+            this.apiKeyRepository.updateName(id, name!),
             this.apiKeyUtil.deleteCacheByKey(apiKey.key),
         ]);
 
@@ -208,7 +208,7 @@ export class ApiKeyService implements IApiKeyService {
         };
     }
 
-    validateApiKey(apiKey: ApiKey, includeActive: boolean = false): void {
+    validateApiKey(apiKey: ApiKey | null, includeActive: boolean = false): asserts apiKey is ApiKey {
         if (!apiKey) {
             throw new NotFoundException({
                 statusCode: EnumApiKeyStatusCodeError.notFound,
@@ -239,7 +239,7 @@ export class ApiKeyService implements IApiKeyService {
     }
 
     async validateXApiKeyGuard(request: IRequestApp): Promise<ApiKey> {
-        const rawHeader: string = this.apiKeyUtil
+        const rawHeader = this.apiKeyUtil
             .extractKeyFromRequest(request)
             ?.trim();
         if (!rawHeader) {
@@ -275,7 +275,7 @@ export class ApiKeyService implements IApiKeyService {
 
         const [key, secret] = xApiKey;
         const today = this.helperService.dateCreate();
-        const apiKey: ApiKey = await this.findOneActiveByKeyAndCache(key);
+        const apiKey = await this.findOneActiveByKeyAndCache(key!);
 
         if (!apiKey) {
             throw new ForbiddenException({
@@ -283,7 +283,7 @@ export class ApiKeyService implements IApiKeyService {
                 message: 'apiKey.error.xApiKey.notFound',
             });
         } else if (
-            !this.apiKeyUtil.validateCredential(key, secret, apiKey) ||
+            !this.apiKeyUtil.validateCredential(key!, secret!, apiKey) ||
             !this.apiKeyUtil.isValid(apiKey, today)
         ) {
             throw new UnauthorizedException({
@@ -307,7 +307,7 @@ export class ApiKeyService implements IApiKeyService {
         }
 
         const { __apiKey } = request;
-        if (!this.apiKeyUtil.validateType(__apiKey, apiKeyTypes)) {
+        if (!__apiKey || !this.apiKeyUtil.validateType(__apiKey, apiKeyTypes)) {
             throw new ForbiddenException({
                 statusCode: EnumApiKeyStatusCodeError.xApiKeyForbidden,
                 message: 'apiKey.error.xApiKey.forbidden',

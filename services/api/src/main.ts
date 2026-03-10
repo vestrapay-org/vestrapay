@@ -21,16 +21,16 @@ async function bootstrap(): Promise<void> {
     app.useLogger(app.get(PinoLogger));
 
     const configService = app.get(ConfigService);
-    const env: string = configService.get<string>('app.env');
-    const timezone: string = configService.get<string>('app.timezone');
-    const host: string = configService.get<string>('app.http.host');
-    const port: number = configService.get<number>('app.http.port');
-    const globalPrefix: string = configService.get<string>('app.globalPrefix');
+    const env: string = configService.get<string>('app.env')!;
+    const timezone: string = configService.get<string>('app.timezone')!;
+    const host: string = configService.get<string>('app.http.host')!;
+    const port: number = configService.get<number>('app.http.port')!;
+    const globalPrefix: string = configService.get<string>('app.globalPrefix')!;
     const versioningPrefix: string = configService.get<string>(
         'app.urlVersion.prefix'
-    );
-    const version: string = configService.get<string>('app.urlVersion.version');
-    const appName: string = configService.get<string>('app.name');
+    )!;
+    const version: string = configService.get<string>('app.urlVersion.version')!;
+    const appName: string = configService.get<string>('app.name')!;
     const databaseUrl = configService.get<string>('database.url');
     const databaseDebug = configService.get<boolean>('database.debug');
     const loggerAuto = configService.get<boolean>('logger.auto');
@@ -40,7 +40,7 @@ async function bootstrap(): Promise<void> {
     // enable
     const versionEnable: string = configService.get<string>(
         'app.urlVersion.enable'
-    );
+    )!;
 
     process.env.NODE_ENV = env;
     process.env.TZ = timezone;
@@ -93,6 +93,9 @@ async function bootstrap(): Promise<void> {
             cause: errorsMessage,
         });
     }
+
+    // Graceful shutdown (closes Prisma, Redis, in-flight requests on SIGTERM)
+    app.enableShutdownHooks();
 
     // Swagger
     await swaggerInit(app);

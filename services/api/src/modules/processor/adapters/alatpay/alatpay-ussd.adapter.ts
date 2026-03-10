@@ -10,69 +10,42 @@ import {
     IUssdVerifyResult,
     IWebhookEvent,
 } from '@modules/processor/interfaces/processor-response.interface';
+import { ProcessorHttpClient } from '@modules/processor/utils/processor-http.client';
 
 @Injectable()
 export class AlatpayUssdAdapter implements IUssdProcessor {
     private readonly logger = new Logger(AlatpayUssdAdapter.name);
-    private readonly baseUrl: string;
-    private readonly secretKey: string;
     private readonly businessId: string;
     private readonly webhookSecret: string;
+    private readonly http: ProcessorHttpClient;
 
     constructor(private readonly configService: ConfigService) {
-        this.baseUrl = this.configService.get<string>('payment.alatpay.baseUrl');
-        this.secretKey = this.configService.get<string>(
-            'payment.alatpay.secretKey'
-        );
         this.businessId = this.configService.get<string>(
             'payment.alatpay.businessId'
-        );
+        )!;
         this.webhookSecret = this.configService.get<string>(
             'payment.alatpay.webhookSecret'
-        );
-    }
+        )!;
 
-    private async alatpayRequest(
-        method: string,
-        path: string,
-        body?: Record<string, unknown>
-    ): Promise<Record<string, unknown>> {
-        const url = `${this.baseUrl}${path}`;
-        this.logger.debug(`AlatPay USSD ${method} ${url}`);
-
-        const options: RequestInit = {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Ocp-Apim-Subscription-Key': this.secretKey,
+        this.http = new ProcessorHttpClient(
+            this.configService.get<string>('payment.alatpay.baseUrl')!,
+            {
+                'Ocp-Apim-Subscription-Key': this.configService.get<string>(
+                    'payment.alatpay.secretKey'
+                )!,
             },
-        };
-
-        if (body) {
-            options.body = JSON.stringify(body);
-        }
-
-        const response = await fetch(url, options);
-        const data = (await response.json()) as Record<string, unknown>;
-
-        if (!response.ok) {
-            this.logger.error(
-                `AlatPay USSD error ${response.status}: ${JSON.stringify(data)}`
-            );
-        }
-
-        this.logger.debug(`AlatPay USSD response: ${JSON.stringify(data)}`);
-        return data;
+            this.logger
+        );
     }
 
     async initiateCharge(
         params: IUssdChargeParams
     ): Promise<IUssdChargeResult> {
-        const data = await this.alatpayRequest(
+        const data = await this.http.request(
             'POST',
             '/alatpay-phone-number/api/v1/phone-number-payment/initialize',
             {
-                amount: String(params.amount / 100), // kobo → naira, as string per API
+                amount: String(params.amount / 100),
                 currency: params.currency,
                 customer: {
                     email: params.email,
@@ -88,7 +61,6 @@ export class AlatpayUssdAdapter implements IUssdProcessor {
         const result = data.data as Record<string, unknown>;
 
         if (!result) {
-            this.logger.error('AlatPay initiateCharge: no data in response');
             throw new Error(
                 (data.message as string) ?? 'Failed to initiate phone payment'
             );
@@ -104,12 +76,12 @@ export class AlatpayUssdAdapter implements IUssdProcessor {
     async completeCharge(
         params: IUssdCompleteParams
     ): Promise<IUssdCompleteResult> {
-        const data = await this.alatpayRequest(
+        const data = await this.http.request(
             'POST',
             '/alatpay-phone-number/api/v1/phone-number-payment/complete-phonenumber-payment',
             {
                 phonenumber: params.phoneNumber,
-                amount: String(params.amount / 100), // kobo → naira
+                amount: String(params.amount / 100),
                 businessid: this.businessId,
                 currency: params.currency,
                 transactionId: params.transactionId,
@@ -122,15 +94,9 @@ export class AlatpayUssdAdapter implements IUssdProcessor {
         ).toLowerCase();
 
         let status: 'success' | 'pending' | 'failed';
-        if (
-            statusStr === 'successful' ||
-            statusStr === 'success'
-        ) {
+        if (statusStr === 'successful' || statusStr === 'success') {
             status = 'success';
-        } else if (
-            statusStr === 'failed' ||
-            statusStr === 'declined'
-        ) {
+        } else if (statusStr === 'failed' || statusStr === 'declined') {
             status = 'failed';
         } else {
             status = 'pending';
@@ -144,8 +110,7 @@ export class AlatpayUssdAdapter implements IUssdProcessor {
     }
 
     async verifyCharge(reference: string): Promise<IUssdVerifyResult> {
-        // Use bank transfer transaction endpoint for verification
-        const data = await this.alatpayRequest(
+        const data = await this.http.request(
             'GET',
             `/bank-transfer/api/v1/bankTransfer/transactions/${reference}`
         );
@@ -161,15 +126,9 @@ export class AlatpayUssdAdapter implements IUssdProcessor {
         ).toLowerCase();
 
         let status: 'success' | 'pending' | 'failed';
-        if (
-            statusStr === 'successful' ||
-            statusStr === 'success'
-        ) {
+        if (statusStr === 'successful' || statusStr === 'success') {
             status = 'success';
-        } else if (
-            statusStr === 'failed' ||
-            statusStr === 'declined'
-        ) {
+        } else if (statusStr === 'failed' || statusStr === 'declined') {
             status = 'failed';
         } else {
             status = 'pending';
@@ -186,39 +145,30 @@ export class AlatpayUssdAdapter implements IUssdProcessor {
         payload: Record<string, unknown>,
         headers: Record<string, string>
     ): Promise<IWebhookEvent> {
-        this.logger.debug(
-            `AlatPay USSD webhook received: ${JSON.stringify(payload)}`
-        );
+        if (!this.webhookSecret) {
+            throw new Error('AlatPay webhook secret not configured');
+        }
 
-        if (this.webhookSecret) {
-            const signature = headers['x-alatpay-signature'] ?? headers['x-webhook-signature'] ?? '';
-            const expectedSignature = createHmac('sha512', this.webhookSecret)
-                .update(JSON.stringify(payload))
-                .digest('hex');
+        const signature = headers['x-alatpay-signature'] ?? headers['x-webhook-signature'] ?? '';
+        const expectedSignature = createHmac('sha512', this.webhookSecret)
+            .update(JSON.stringify(payload))
+            .digest('hex');
 
-            if (signature !== expectedSignature) {
-                this.logger.warn('AlatPay USSD webhook signature mismatch');
-                throw new UnauthorizedException('Invalid webhook signature');
-            }
+        if (signature !== expectedSignature) {
+            this.logger.warn('AlatPay USSD webhook signature mismatch');
+            throw new UnauthorizedException('Invalid webhook signature');
         }
 
         const data = payload.data as Record<string, unknown> | undefined;
-
         const reference = (data?.orderId as string) ?? '';
         const statusStr = (
             (data?.status as string) ?? ''
         ).toLowerCase();
 
         let status: string;
-        if (
-            statusStr === 'successful' ||
-            statusStr === 'success'
-        ) {
+        if (statusStr === 'successful' || statusStr === 'success') {
             status = 'success';
-        } else if (
-            statusStr === 'failed' ||
-            statusStr === 'declined'
-        ) {
+        } else if (statusStr === 'failed' || statusStr === 'declined') {
             status = 'failed';
         } else {
             status = 'pending';

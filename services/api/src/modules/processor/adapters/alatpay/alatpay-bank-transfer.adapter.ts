@@ -8,59 +8,32 @@ import {
     IVirtualAccountResult,
     IWebhookEvent,
 } from '@modules/processor/interfaces/processor-response.interface';
+import { ProcessorHttpClient } from '@modules/processor/utils/processor-http.client';
 
 @Injectable()
 export class AlatpayBankTransferAdapter implements IBankTransferProcessor {
     private readonly logger = new Logger(AlatpayBankTransferAdapter.name);
-    private readonly baseUrl: string;
-    private readonly secretKey: string;
     private readonly businessId: string;
     private readonly webhookSecret: string;
+    private readonly http: ProcessorHttpClient;
 
     constructor(private readonly configService: ConfigService) {
-        this.baseUrl = this.configService.get<string>('payment.alatpay.baseUrl');
-        this.secretKey = this.configService.get<string>(
-            'payment.alatpay.secretKey'
-        );
         this.businessId = this.configService.get<string>(
             'payment.alatpay.businessId'
-        );
+        )!;
         this.webhookSecret = this.configService.get<string>(
             'payment.alatpay.webhookSecret'
-        );
-    }
+        )!;
 
-    private async alatpayRequest(
-        method: string,
-        path: string,
-        body?: Record<string, unknown>
-    ): Promise<Record<string, unknown>> {
-        const url = `${this.baseUrl}${path}`;
-        this.logger.debug(`AlatPay ${method} ${url}`);
-
-        const options: RequestInit = {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-                'Ocp-Apim-Subscription-Key': this.secretKey,
+        this.http = new ProcessorHttpClient(
+            this.configService.get<string>('payment.alatpay.baseUrl')!,
+            {
+                'Ocp-Apim-Subscription-Key': this.configService.get<string>(
+                    'payment.alatpay.secretKey'
+                )!,
             },
-        };
-
-        if (body) {
-            options.body = JSON.stringify(body);
-        }
-
-        const response = await fetch(url, options);
-        const data = (await response.json()) as Record<string, unknown>;
-
-        if (!response.ok) {
-            this.logger.error(
-                `AlatPay error ${response.status}: ${JSON.stringify(data)}`
-            );
-        }
-
-        this.logger.debug(`AlatPay response: ${JSON.stringify(data)}`);
-        return data;
+            this.logger
+        );
     }
 
     async createVirtualAccount(
@@ -70,12 +43,12 @@ export class AlatpayBankTransferAdapter implements IBankTransferProcessor {
             params.customerName ?? ''
         ).split(' ');
 
-        const data = await this.alatpayRequest(
+        const data = await this.http.request(
             'POST',
             '/bank-transfer/api/v1/bankTransfer/virtualAccount',
             {
                 businessId: this.businessId,
-                amount: params.amount / 100, // kobo → naira
+                amount: params.amount / 100,
                 currency: params.currency,
                 orderId: params.reference,
                 description: 'VestraPay Payment',
@@ -92,7 +65,6 @@ export class AlatpayBankTransferAdapter implements IBankTransferProcessor {
         const result = data.data as Record<string, unknown>;
 
         if (!result) {
-            this.logger.error('AlatPay createVirtualAccount: no data in response');
             throw new Error(
                 (data.message as string) ??
                     'Failed to create virtual account'
@@ -101,7 +73,7 @@ export class AlatpayBankTransferAdapter implements IBankTransferProcessor {
 
         const expiresAt = result.expiredAt
             ? new Date(result.expiredAt as string)
-            : new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours fallback
+            : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
         return {
             accountNumber: result.virtualBankAccountNumber as string,
@@ -114,7 +86,7 @@ export class AlatpayBankTransferAdapter implements IBankTransferProcessor {
     }
 
     async verifyPayment(paymentId: string): Promise<IVerifyPaymentResult> {
-        const data = await this.alatpayRequest(
+        const data = await this.http.request(
             'GET',
             `/bank-transfer/api/v1/bankTransfer/transactions/${paymentId}`
         );
@@ -147,7 +119,7 @@ export class AlatpayBankTransferAdapter implements IBankTransferProcessor {
 
         return {
             status,
-            amount: ((result.amount as number) ?? 0) * 100, // naira → kobo
+            amount: ((result.amount as number) ?? 0) * 100,
             paidAt: status === 'success' ? new Date() : undefined,
             providerReference: result.id as string,
         };
@@ -157,24 +129,21 @@ export class AlatpayBankTransferAdapter implements IBankTransferProcessor {
         payload: Record<string, unknown>,
         headers: Record<string, string>
     ): Promise<IWebhookEvent> {
-        this.logger.debug(
-            `AlatPay webhook received: ${JSON.stringify(payload)}`
-        );
+        if (!this.webhookSecret) {
+            throw new Error('AlatPay webhook secret not configured');
+        }
 
-        if (this.webhookSecret) {
-            const signature = headers['x-alatpay-signature'] ?? headers['x-webhook-signature'] ?? '';
-            const expectedSignature = createHmac('sha512', this.webhookSecret)
-                .update(JSON.stringify(payload))
-                .digest('hex');
+        const signature = headers['x-alatpay-signature'] ?? headers['x-webhook-signature'] ?? '';
+        const expectedSignature = createHmac('sha512', this.webhookSecret)
+            .update(JSON.stringify(payload))
+            .digest('hex');
 
-            if (signature !== expectedSignature) {
-                this.logger.warn('AlatPay webhook signature mismatch');
-                throw new UnauthorizedException('Invalid webhook signature');
-            }
+        if (signature !== expectedSignature) {
+            this.logger.warn('AlatPay webhook signature mismatch');
+            throw new UnauthorizedException('Invalid webhook signature');
         }
 
         const data = payload.data as Record<string, unknown> | undefined;
-
         const reference = (data?.orderId as string) ?? '';
         const statusStr = (
             (data?.status as string) ?? ''
@@ -201,7 +170,7 @@ export class AlatpayBankTransferAdapter implements IBankTransferProcessor {
             reference,
             paymentId: data?.id as string,
             status,
-            amount: ((data?.amount as number) ?? 0) * 100, // naira → kobo
+            amount: ((data?.amount as number) ?? 0) * 100,
             raw: payload,
         };
     }

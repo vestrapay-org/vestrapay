@@ -62,11 +62,11 @@ export default registerAs(
     (): IConfigAuth => ({
         jwt: {
             accessToken: {
-                jwksUri: process.env.AUTH_JWT_ACCESS_TOKEN_JWKS_URI,
-                kid: process.env.AUTH_JWT_ACCESS_TOKEN_KID,
+                jwksUri: process.env.AUTH_JWT_ACCESS_TOKEN_JWKS_URI ?? '',
+                kid: process.env.AUTH_JWT_ACCESS_TOKEN_KID ?? '',
                 algorithm: 'ES256',
-                privateKey: process.env.AUTH_JWT_ACCESS_TOKEN_PRIVATE_KEY,
-                publicKey: process.env.AUTH_JWT_ACCESS_TOKEN_PUBLIC_KEY,
+                privateKey: process.env.AUTH_JWT_ACCESS_TOKEN_PRIVATE_KEY ?? '',
+                publicKey: process.env.AUTH_JWT_ACCESS_TOKEN_PUBLIC_KEY ?? '',
                 expirationTimeInSeconds:
                     ms(
                         process.env
@@ -75,11 +75,11 @@ export default registerAs(
             },
 
             refreshToken: {
-                jwksUri: process.env.AUTH_JWT_REFRESH_TOKEN_JWKS_URI,
-                kid: process.env.AUTH_JWT_REFRESH_TOKEN_KID,
+                jwksUri: process.env.AUTH_JWT_REFRESH_TOKEN_JWKS_URI ?? '',
+                kid: process.env.AUTH_JWT_REFRESH_TOKEN_KID ?? '',
                 algorithm: 'ES512',
-                privateKey: process.env.AUTH_JWT_REFRESH_TOKEN_PRIVATE_KEY,
-                publicKey: process.env.AUTH_JWT_REFRESH_TOKEN_PUBLIC_KEY,
+                privateKey: process.env.AUTH_JWT_REFRESH_TOKEN_PRIVATE_KEY ?? '',
+                publicKey: process.env.AUTH_JWT_REFRESH_TOKEN_PUBLIC_KEY ?? '',
                 expirationTimeInSeconds:
                     ms(
                         process.env
@@ -87,8 +87,8 @@ export default registerAs(
                     ) / 1000,
             },
 
-            audience: process.env.AUTH_JWT_AUDIENCE,
-            issuer: process.env.AUTH_JWT_ISSUER,
+            audience: process.env.AUTH_JWT_AUDIENCE ?? '',
+            issuer: process.env.AUTH_JWT_ISSUER ?? '',
             header: 'Authorization',
             prefix: 'Bearer',
         },
@@ -121,7 +121,7 @@ export default registerAs(
             maxAttempt: 5,
             lockAttemptDuration: ms('2m'),
             encryption: {
-                key: process.env.AUTH_TWO_FACTOR_ENCRYPTION_KEY,
+                key: process.env.AUTH_TWO_FACTOR_ENCRYPTION_KEY ?? '',
             },
         },
     })

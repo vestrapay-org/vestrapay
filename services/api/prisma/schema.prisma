@@ -128,6 +128,7 @@ model Session {
   updatedAt DateTime @updatedAt
   updatedBy String?  @db.Uuid
 
+  @@unique([jti])
   @@index([userId])
   @@index([userId, isRevoked, expiredAt])
   @@index([createdAt])

@@ -127,7 +127,7 @@ export class AuthService implements IAuthService {
 
         const today = this.helperService.dateCreate();
         const expiredAt = this.helperService.dateCreateFromTimestamp(
-            oldExp * 1000
+            oldExp! * 1000
         );
 
         const newRefreshTokenExpire = this.helperService.dateDiff(

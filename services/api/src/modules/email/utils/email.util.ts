@@ -31,11 +31,11 @@ export class EmailUtil {
         private readonly helperService: HelperService,
         private readonly configService: ConfigService
     ) {
-        this.noreplyEmail = this.configService.get<string>('email.noreply');
-        this.supportEmail = this.configService.get<string>('email.support');
+        this.noreplyEmail = this.configService.get<string>('email.noreply')!;
+        this.supportEmail = this.configService.get<string>('email.support')!;
 
-        this.homeName = this.configService.get<string>('home.name');
-        this.homeUrl = this.configService.get<string>('home.url');
+        this.homeName = this.configService.get<string>('home.name')!;
+        this.homeUrl = this.configService.get<string>('home.url')!;
     }
 
     /**

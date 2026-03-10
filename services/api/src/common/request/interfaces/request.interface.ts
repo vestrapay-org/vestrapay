@@ -6,9 +6,10 @@ import { RoleAbilityDto } from '@modules/role/dtos/role.ability.dto';
 import { IUser } from '@modules/user/interfaces/user.interface';
 import { RequestUserAgentDto } from '@common/request/dtos/request.user-agent.dto';
 
-export interface IRequestApp<T = IAuthJwtAccessTokenPayload> extends Request {
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface IRequestApp extends Request {
     correlationId: string;
-    user?: T;
+    user?: IAuthJwtAccessTokenPayload;
 
     __apiKey?: ApiKey;
     __user?: IUser;

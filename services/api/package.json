@@ -48,7 +48,6 @@
         "@aws-sdk/client-ses": "^3.958.0",
         "@aws-sdk/s3-request-presigner": "^3.958.0",
         "@casl/ability": "^6.7.5",
-        "@faker-js/faker": "^10.1.0",
         "@keyv/redis": "^5.1.5",
         "@nestjs/axios": "^4.0.1",
         "@nestjs/bullmq": "^11.0.4",
@@ -109,6 +108,7 @@
         "yargs": "^18.0.0"
     },
     "devDependencies": {
+        "@faker-js/faker": "^10.1.0",
         "@commitlint/cli": "^20.2.0",
         "@commitlint/config-conventional": "^20.2.0",
         "@eslint/js": "^9.39.2",

@@ -62,6 +62,7 @@ export class ResponseMetadataDto {
         | number[]
         | boolean
         | boolean[]
+        | undefined
         | Record<
               string,
               | string

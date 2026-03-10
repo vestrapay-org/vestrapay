@@ -12,16 +12,16 @@ export class PaymentUtil {
     constructor(private readonly configService: ConfigService) {
         this.referencePrefix = this.configService.get<string>(
             'payment.transaction.referencePrefix'
-        );
+        )!;
         this.cardFeePercentage = this.configService.get<number>(
             'payment.fees.cardPercentage'
-        );
+        )!;
         this.transferInflowPercentage = this.configService.get<number>(
             'payment.fees.transferInflowPercentage'
-        );
+        )!;
         this.transferInflowCap = this.configService.get<number>(
             'payment.fees.transferInflowCap'
-        );
+        )!;
     }
 
     generateReference(): string {

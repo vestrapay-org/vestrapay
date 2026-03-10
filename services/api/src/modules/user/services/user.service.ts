@@ -101,7 +101,7 @@ export class UserService implements IUserService {
         private readonly configService: ConfigService
     ) {
         this.userRoleName =
-            this.configService.get<string>('user.default.role');
+            this.configService.get<string>('user.default.role')!;
     }
 
     async validateUserGuard(
@@ -130,7 +130,7 @@ export class UserService implements IUserService {
         }
 
         const checkPasswordExpired: boolean =
-            this.authUtil.checkPasswordExpired(user.passwordExpired);
+            this.authUtil.checkPasswordExpired(user.passwordExpired!);
         if (checkPasswordExpired) {
             throw new ForbiddenException({
                 statusCode: EnumUserStatus_CODE_ERROR.passwordExpired,
@@ -353,7 +353,7 @@ export class UserService implements IUserService {
         userId: string
     ): Promise<IResponseReturn<UserProfileResponseDto>> {
         const user = await this.userRepository.findOneActiveProfileById(userId);
-        const mapped = this.userUtil.mapProfile(user);
+        const mapped = this.userUtil.mapProfile(user!);
 
         return {
             data: mapped,
@@ -372,7 +372,7 @@ export class UserService implements IUserService {
                 requestLog
             );
 
-            return;
+            return {};
         } catch (err: unknown) {
             throw new InternalServerErrorException({
                 statusCode: EnumAppStatusCodeError.unknown,
@@ -393,7 +393,7 @@ export class UserService implements IUserService {
                 this.sessionUtil.deleteAllLogins(userId, sessions),
             ]);
 
-            return;
+            return {};
         } catch (err: unknown) {
             throw new InternalServerErrorException({
                 statusCode: EnumAppStatusCodeError.unknown,
@@ -437,7 +437,7 @@ export class UserService implements IUserService {
                 requestLog
             );
 
-            return;
+            return {};
         } catch (err: unknown) {
             throw new InternalServerErrorException({
                 statusCode: EnumAppStatusCodeError.unknown,
@@ -529,7 +529,7 @@ export class UserService implements IUserService {
                 message: 'auth.error.passwordAttemptMax',
             });
         } else if (
-            !this.authUtil.validatePassword(oldPassword, user.password)
+            !this.authUtil.validatePassword(oldPassword, user.password!)
         ) {
             await this.userRepository.increasePasswordAttempt(user.id);
 
@@ -546,7 +546,7 @@ export class UserService implements IUserService {
             twoFactorVerified = await this.handleTwoFactorValidation(user, {
                 code,
                 backupCode,
-                method,
+                method: method!,
             });
         }
 
@@ -576,7 +576,7 @@ export class UserService implements IUserService {
                 username: user.username,
             });
 
-            return;
+            return {};
         } catch (err: unknown) {
             throw new InternalServerErrorException({
                 statusCode: EnumAppStatusCodeError.unknown,
@@ -630,7 +630,7 @@ export class UserService implements IUserService {
         await this.userRepository.resetPasswordAttempt(user.id);
 
         const checkPasswordExpired: boolean =
-            this.authUtil.checkPasswordExpired(user.passwordExpired);
+            this.authUtil.checkPasswordExpired(user.passwordExpired!);
         if (checkPasswordExpired) {
             throw new ForbiddenException({
                 statusCode: EnumUserStatus_CODE_ERROR.passwordExpired,
@@ -665,7 +665,7 @@ export class UserService implements IUserService {
         );
 
         const session = await this.sessionUtil.getLogin(userId, sessionId);
-        if (session.jti !== oldJti) {
+        if (!session || session.jti !== oldJti) {
             throw new UnauthorizedException({
                 statusCode: EnumAuthStatusCodeError.jwtRefreshTokenInvalid,
                 message: 'auth.error.refreshTokenInvalid',
@@ -1186,7 +1186,7 @@ export class UserService implements IUserService {
         try {
             await this.userRepository.disableTwoFactor(user.id, requestLog);
 
-            return;
+            return {};
         } catch (err: unknown) {
             throw new InternalServerErrorException({
                 statusCode: EnumAppStatusCodeError.unknown,
@@ -1273,7 +1273,7 @@ export class UserService implements IUserService {
                 username: user.username,
             });
 
-            return;
+            return {};
         } catch (err: unknown) {
             throw new InternalServerErrorException({
                 statusCode: EnumAppStatusCodeError.unknown,

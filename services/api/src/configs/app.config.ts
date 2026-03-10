@@ -30,7 +30,7 @@ export default registerAs(
     (): IConfigApp => ({
         name: process.env.APP_NAME ?? 'VestraPay',
         env:
-            EnumAppEnvironment[process.env.APP_ENV] ?? EnumAppEnvironment.local,
+            EnumAppEnvironment[process.env.APP_ENV as keyof typeof EnumAppEnvironment] ?? EnumAppEnvironment.local,
         timezone: process.env.APP_TIMEZONE ?? EnumRequestTimezone.asiaJakarta,
         version,
         author: author as {

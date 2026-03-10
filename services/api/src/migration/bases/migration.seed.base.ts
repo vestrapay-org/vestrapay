@@ -26,7 +26,7 @@ export abstract class MigrationSeedBase extends CommandRunner {
     @Option({
         flags: '-t, --type <type>',
         choices: [EnumMigrationType.seed, EnumMigrationType.remove],
-        defaultValue: null,
+        defaultValue: undefined,
         required: true,
         name: 'type',
         description: `Migration type: ${EnumMigrationType.seed} or ${EnumMigrationType.seed}`,

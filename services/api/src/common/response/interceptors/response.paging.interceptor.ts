@@ -21,7 +21,7 @@ import { HelperService } from '@common/helper/services/helper.service';
 import { IResponsePagingReturn } from '@common/response/interfaces/response.interface';
 import { IMessageProperties } from '@common/message/interfaces/message.interface';
 import { EnumMessageLanguage } from '@common/message/enums/message.enum';
-import { EnumPaginationType } from '@common/pagination/enums/pagination.enum';
+import { EnumPaginationOrderDirectionType, EnumPaginationType } from '@common/pagination/enums/pagination.enum';
 
 /**
  * Global pagination response interceptor that standardizes paginated HTTP response format
@@ -103,7 +103,7 @@ export class ResponsePagingInterceptor<T> implements NestInterceptor {
                     let nextPage: number | undefined;
                     let previousPage: number | undefined;
                     let page: number | undefined;
-                    let hasPrevious: boolean | undefined;
+                    let hasPrevious: boolean = false;
 
                     if (responseData.type === 'cursor') {
                         nextCursor = responseData.cursor;
@@ -122,7 +122,7 @@ export class ResponsePagingInterceptor<T> implements NestInterceptor {
                         rMetadata?.httpStatus ?? response.statusCode;
                     const statusCode =
                         rMetadata?.statusCode ?? response.statusCode;
-                    const messageProperties: IMessageProperties =
+                    const messageProperties: IMessageProperties | undefined =
                         rMetadata?.messageProperties;
 
                     if (rMetadata) {
@@ -145,12 +145,12 @@ export class ResponsePagingInterceptor<T> implements NestInterceptor {
                         previousPage,
                         page,
                         perPage,
-                        search: request.__pagination.search,
-                        filters: request.__pagination.filters,
-                        orderBy: request.__pagination.orderBy,
-                        orderDirection: request.__pagination.orderDirection,
-                        availableSearch: request.__pagination.availableSearch,
-                        availableOrderBy: request.__pagination.availableOrderBy,
+                        search: request.__pagination?.search,
+                        filters: request.__pagination?.filters,
+                        orderBy: request.__pagination?.orderBy ?? metadata.orderBy,
+                        orderDirection: request.__pagination?.orderDirection ?? metadata.orderDirection,
+                        availableSearch: request.__pagination?.availableSearch ?? metadata.availableSearch,
+                        availableOrderBy: request.__pagination?.availableOrderBy ?? metadata.availableOrderBy,
                     };
 
                     const message: string = this.messageService.setMessage(
@@ -206,7 +206,7 @@ export class ResponsePagingInterceptor<T> implements NestInterceptor {
             timezone: this.helperService.dateGetZone(today),
             path: request.path,
             version: xVersion,
-            repoVersion: this.configService.get<string>('app.version'),
+            repoVersion: this.configService.get<string>('app.version')!,
             requestId: String(request.id),
             correlationId: String(request.correlationId),
 
@@ -216,10 +216,10 @@ export class ResponsePagingInterceptor<T> implements NestInterceptor {
             filters: undefined,
             page: 0,
             perPage: 0,
-            orderBy: undefined,
-            orderDirection: undefined,
-            availableSearch: undefined,
-            availableOrderBy: undefined,
+            orderBy: '',
+            orderDirection: EnumPaginationOrderDirectionType.asc,
+            availableSearch: [],
+            availableOrderBy: [],
             nextPage: undefined,
             previousPage: undefined,
             hasNext: false,

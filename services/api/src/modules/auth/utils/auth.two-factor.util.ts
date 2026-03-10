@@ -46,34 +46,34 @@ export class AuthTwoFactorUtil {
         private readonly configService: ConfigService,
         private readonly helperService: HelperService
     ) {
-        this.issuer = this.configService.get<string>('auth.twoFactor.issuer');
-        this.digits = this.configService.get<number>('auth.twoFactor.digits');
-        this.step = this.configService.get<number>('auth.twoFactor.step');
-        this.window = this.configService.get<number>('auth.twoFactor.window');
+        this.issuer = this.configService.get<string>('auth.twoFactor.issuer')!;
+        this.digits = this.configService.get<number>('auth.twoFactor.digits')!;
+        this.step = this.configService.get<number>('auth.twoFactor.step')!;
+        this.window = this.configService.get<number>('auth.twoFactor.window')!;
         this.secretLength = this.configService.get<number>(
             'auth.twoFactor.secretLength'
-        );
+        )!;
         this.challengeTtlInMs = this.configService.get<number>(
             'auth.twoFactor.challengeTtlInMs'
-        );
+        )!;
         this.cachePrefixKey = this.configService.get<string>(
             'auth.twoFactor.cachePrefixKey'
-        );
+        )!;
         this.backupCodesCount = this.configService.get<number>(
             'auth.twoFactor.backupCodes.count'
-        );
+        )!;
         this.backupCodesLength = this.configService.get<number>(
             'auth.twoFactor.backupCodes.length'
-        );
+        )!;
         this.encryptionKey = this.configService.get<string>(
             'auth.twoFactor.encryption.key'
-        );
+        )!;
         this.maxAttempt = this.configService.get<number>(
             'auth.twoFactor.maxAttempt'
-        );
+        )!;
         this.lockAttemptDuration = this.configService.get<number>(
             'auth.twoFactor.lockAttemptDuration'
-        );
+        )!;
 
         authenticator.options = {
             step: this.step,
@@ -381,6 +381,6 @@ export class AuthTwoFactorUtil {
         const isLocked = await this.cacheManager.get<boolean>(key);
         const retryAfterMs = await this.cacheManager.ttl(key);
 
-        return isLocked ? retryAfterMs : 0;
+        return isLocked ? (retryAfterMs ?? 0) : 0;
     }
 }

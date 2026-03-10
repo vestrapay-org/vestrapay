@@ -28,7 +28,7 @@ export class RoleRepository {
             where: {
                 ...where,
                 ...type,
-            },
+            } as IPaginationQueryOffsetParams['where'],
         });
     }
 
@@ -41,11 +41,11 @@ export class RoleRepository {
             where: {
                 ...where,
                 ...type,
-            },
+            } as IPaginationQueryCursorParams['where'],
         });
     }
 
-    async findOneById(id: string): Promise<Role> {
+    async findOneById(id: string): Promise<Role | null> {
         return this.databaseService.role.findUnique({
             where: { id },
             include: {

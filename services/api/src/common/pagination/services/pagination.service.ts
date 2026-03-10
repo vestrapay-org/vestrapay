@@ -199,7 +199,7 @@ export class PaginationService implements IPaginationService {
         if (hasNext) {
             const nextItem = data[data.length - 1];
             nextCursor = this.encodeCursor({
-                cursor: nextItem[cursorField],
+                cursor: (nextItem as Record<string, string>)[cursorField],
                 orderBy,
                 where,
             });

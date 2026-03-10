@@ -118,10 +118,10 @@ export function GreaterThanEqualOtherProperty(
     property: string,
     validationOptions?: ValidationOptions
 ) {
-    return function (object: unknown, propertyName: string): void {
+    return function (object: object, propertyName: string): void {
         registerDecorator({
             name: 'GreaterThanEqualOtherProperty',
-            target: object.constructor,
+            target: object.constructor as Function,
             propertyName: propertyName,
             options: validationOptions,
             constraints: [property],
@@ -241,10 +241,10 @@ export function GreaterThanOtherProperty(
     property: string,
     validationOptions?: ValidationOptions
 ) {
-    return function (object: unknown, propertyName: string): void {
+    return function (object: object, propertyName: string): void {
         registerDecorator({
             name: 'GreaterThanOtherProperty',
-            target: object.constructor,
+            target: object.constructor as Function,
             propertyName: propertyName,
             options: validationOptions,
             constraints: [property],

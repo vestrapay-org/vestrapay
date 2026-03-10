@@ -20,10 +20,10 @@ export class FeatureFlagUtil {
     ) {
         this.cachePrefixKey = this.configService.get<string>(
             'featureFlag.cachePrefixKey'
-        );
+        )!;
         this.cacheTtlMs = this.configService.get<number>(
             'featureFlag.cacheTtlMs'
-        );
+        )!;
     }
 
     async getCacheByKey(key: string): Promise<FeatureFlag | null> {

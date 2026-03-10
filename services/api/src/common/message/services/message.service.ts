@@ -27,10 +27,10 @@ export class MessageService implements IMessageService {
         private readonly configService: ConfigService
     ) {
         this.defaultLanguage =
-            this.configService.get<EnumMessageLanguage>('message.language');
+            this.configService.get<EnumMessageLanguage>('message.language')!;
         this.availableLanguage = this.configService.get<EnumMessageLanguage[]>(
             'message.availableLanguage'
-        );
+        )!;
     }
 
     /**
@@ -40,7 +40,7 @@ export class MessageService implements IMessageService {
      * @returns {string} The validated language code or undefined if not supported
      */
     filterLanguage(customLanguage: string): string {
-        return this.availableLanguage.find(e => e === customLanguage);
+        return this.availableLanguage.find(e => e === customLanguage) ?? this.defaultLanguage;
     }
 
     /**
@@ -90,7 +90,7 @@ export class MessageService implements IMessageService {
                 messages.push(
                     this.createValidationMessage(
                         constraint,
-                        error.constraints[constraint],
+                        error.constraints![constraint],
                         error.value,
                         property,
                         options
@@ -145,7 +145,7 @@ export class MessageService implements IMessageService {
             const child = children[0];
             lastConstraint = child.constraints ?? {};
             property = `${property}.${child.property}`;
-            children = children[0].children;
+            children = children[0].children ?? [];
         }
 
         return {
@@ -196,7 +196,7 @@ export class MessageService implements IMessageService {
 
         return {
             key: constraint,
-            property,
+            property: property ?? 'Unknown',
             message,
         };
     }

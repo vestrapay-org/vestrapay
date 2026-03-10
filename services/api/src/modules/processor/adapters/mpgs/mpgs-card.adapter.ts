@@ -12,103 +12,64 @@ import {
     IPayResult,
     IUpdateSessionResult,
 } from '@modules/processor/interfaces/processor-response.interface';
+import { ProcessorHttpClient } from '@modules/processor/utils/processor-http.client';
 
 @Injectable()
 export class MpgsCardAdapter implements ICardProcessor {
     private readonly logger = new Logger(MpgsCardAdapter.name);
-    private readonly baseUrl: string;
     private readonly merchantId: string;
-    private readonly authHeader: string;
+    private readonly http: ProcessorHttpClient;
 
     constructor(private readonly configService: ConfigService) {
-        this.baseUrl = this.configService.get<string>('payment.mpgs.baseUrl');
+        const baseUrl = this.configService.get<string>('payment.mpgs.baseUrl')!;
         this.merchantId = this.configService.get<string>(
             'payment.mpgs.merchantId'
-        );
+        )!;
         const apiPassword = this.configService.get<string>(
             'payment.mpgs.apiPassword'
-        );
+        )!;
 
-        // Basic Auth: merchant.{merchantId}:{apiPassword}
         const credentials = `merchant.${this.merchantId}:${apiPassword}`;
-        this.authHeader = `Basic ${Buffer.from(credentials).toString('base64')}`;
-    }
+        const authHeader = `Basic ${Buffer.from(credentials).toString('base64')}`;
 
-    private get merchantUrl(): string {
-        return `${this.baseUrl}/merchant/${this.merchantId}`;
-    }
-
-    private async mpgsRequest(
-        method: string,
-        path: string,
-        body?: Record<string, unknown>
-    ): Promise<Record<string, unknown>> {
-        const url = `${this.merchantUrl}${path}`;
-        this.logger.debug(`MPGS ${method} ${url}`);
-
-        const options: RequestInit = {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-                Authorization: this.authHeader,
-            },
-        };
-
-        if (body) {
-            options.body = JSON.stringify(body);
-        }
-
-        const response = await fetch(url, options);
-        const data = (await response.json()) as Record<string, unknown>;
-
-        if (!response.ok) {
-            this.logger.error(
-                `MPGS error ${response.status}: ${JSON.stringify(data)}`
-            );
-        }
-
-        this.logger.debug(`MPGS response: ${JSON.stringify(data)}`);
-        return data;
+        this.http = new ProcessorHttpClient(
+            `${baseUrl}/merchant/${this.merchantId}`,
+            { Authorization: authHeader },
+            this.logger
+        );
     }
 
     async createSession(): Promise<ICreateSessionResult> {
-        const data = await this.mpgsRequest('POST', '/session');
-
+        const data = await this.http.request('POST', '/session');
         const session = data.session as Record<string, unknown>;
-        return {
-            sessionId: session?.id as string,
-        };
+        return { sessionId: session?.id as string };
     }
 
     async updateSessionWithCard(
         sessionId: string,
         card: ICardData
     ): Promise<IUpdateSessionResult> {
-        const cardData: Record<string, unknown> = {
-            number: card.number,
-            securityCode: card.cvv,
-            expiry: {
-                month: card.expiryMonth,
-                year: card.expiryYear,
-            },
-        };
-
-        const data = await this.mpgsRequest('PUT', `/session/${sessionId}`, {
+        const data = await this.http.request('PUT', `/session/${sessionId}`, {
             sourceOfFunds: {
                 provided: {
-                    card: cardData,
+                    card: {
+                        number: card.number,
+                        securityCode: card.cvv,
+                        expiry: {
+                            month: card.expiryMonth,
+                            year: card.expiryYear,
+                        },
+                    },
                 },
             },
         });
 
         const session = data.session as Record<string, unknown>;
-        return {
-            success: session?.updateStatus === 'SUCCESS',
-        };
+        return { success: session?.updateStatus === 'SUCCESS' };
     }
 
     async initiate3dsAuth(params: I3dsInitParams): Promise<I3dsInitResult> {
-        const data = await this.mpgsRequest(
+        const data = await this.http.request(
             'PUT',
             `/order/${params.orderId}/transaction/${params.transactionId}`,
             {
@@ -123,9 +84,7 @@ export class MpgsCardAdapter implements ICardProcessor {
                     reference: params.orderReference ?? params.orderId,
                     currency: params.currency,
                 },
-                session: {
-                    id: params.sessionId,
-                },
+                session: { id: params.sessionId },
             }
         );
 
@@ -156,9 +115,7 @@ export class MpgsCardAdapter implements ICardProcessor {
                 amount: params.amount.toFixed(2),
                 currency: params.currency,
             },
-            session: {
-                id: params.sessionId,
-            },
+            session: { id: params.sessionId },
         };
 
         if (params.deviceInfo) {
@@ -184,7 +141,7 @@ export class MpgsCardAdapter implements ICardProcessor {
             };
         }
 
-        const data = await this.mpgsRequest(
+        const data = await this.http.request(
             'PUT',
             `/order/${params.orderId}/transaction/${params.transactionId}`,
             body
@@ -216,20 +173,14 @@ export class MpgsCardAdapter implements ICardProcessor {
                 currency: params.currency,
                 reference: params.orderReference ?? params.orderId,
             },
-            sourceOfFunds: {
-                type: 'CARD',
-            },
-            transaction: {
-                reference: `TXN_${params.orderId}`,
-            },
+            sourceOfFunds: { type: 'CARD' },
+            transaction: { reference: `TXN_${params.orderId}` },
         };
 
-        // Always include session for card data
         if (params.sessionId) {
             body.session = { id: params.sessionId };
         }
 
-        // Include authentication if 3DS was done
         if (params.authTransactionId) {
             body.authentication = {
                 transactionId: params.authTransactionId,
@@ -237,7 +188,7 @@ export class MpgsCardAdapter implements ICardProcessor {
         }
 
         const payTxnId = `PAY_${Date.now()}`;
-        const data = await this.mpgsRequest(
+        const data = await this.http.request(
             'PUT',
             `/order/${params.orderId}/transaction/${payTxnId}`,
             body

@@ -64,7 +64,7 @@ export class HealthSystemController {
         ]);
 
         return {
-            data,
+            data: data as unknown as HealthAwsResponseDto,
         };
     }
 
@@ -79,7 +79,7 @@ export class HealthSystemController {
             () => this.redisIndicator.isHealthy('redis'),
         ]);
         return {
-            data,
+            data: data as unknown as HealthDatabaseResponseDto,
         };
     }
 
@@ -95,7 +95,7 @@ export class HealthSystemController {
             () => this.sentryIndicator.isHealthy('sentry'),
         ]);
         return {
-            data,
+            data: data as unknown as HealthThirdPartyResponseDto,
         };
     }
 
@@ -124,7 +124,7 @@ export class HealthSystemController {
         ]);
 
         return {
-            data,
+            data: data as unknown as HealthInstanceResponseDto,
         };
     }
 }
