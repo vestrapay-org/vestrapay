@@ -36,4 +36,14 @@ export class PaymentSystemController {
         await this.paymentService.handleAlatpayUssdWebhook(body, headers);
         return { data: { received: true } };
     }
+
+    @HttpCode(HttpStatus.OK)
+    @Post('/webhook/korapay/transfer')
+    async korapayTransferWebhook(
+        @Body() body: Record<string, unknown>,
+        @Headers() headers: Record<string, string>
+    ) {
+        await this.paymentService.handleKorapayWebhook(body, headers);
+        return { data: { received: true } };
+    }
 }

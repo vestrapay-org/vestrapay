@@ -30,10 +30,10 @@ export class UserUtil {
     ) {
         this.usernamePrefix = this.configService.get<string>(
             'user.usernamePrefix'
-        );
+        )!;
         this.usernamePattern = this.configService.get<RegExp>(
             'user.usernamePattern'
-        );
+        )!;
 
         const availableLanguages = this.configService.get<string[]>(
             'message.availableLanguage'
@@ -81,8 +81,8 @@ export class UserUtil {
                 !!twoFactor.iv &&
                 !twoFactor.confirmedAt,
             backupCodesRemaining: twoFactor.backupCodes.length,
-            confirmedAt: twoFactor.confirmedAt,
-            lastUsedAt: twoFactor.lastUsedAt,
+            confirmedAt: twoFactor.confirmedAt ?? undefined,
+            lastUsedAt: twoFactor.lastUsedAt ?? undefined,
         };
     }
 

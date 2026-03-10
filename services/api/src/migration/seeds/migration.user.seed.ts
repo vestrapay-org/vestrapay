@@ -44,7 +44,7 @@ export class MigrationUserSeed
     ) {
         super();
 
-        this.env = this.configService.get<EnumAppEnvironment>('app.env');
+        this.env = this.configService.get<EnumAppEnvironment>('app.env')!;
         this.users = migrationUserData[this.env];
     }
 
@@ -89,7 +89,7 @@ export class MigrationUserSeed
                             id: userId,
                             email: user.email.toLowerCase(),
                             name: user.name,
-                            roleId: roles.find(role => role.name === user.role)
+                            roleId: roles.find(role => role.name === user.role)!
                                 .id,
                             password: passwordHash,
                             passwordCreated,

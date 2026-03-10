@@ -30,6 +30,7 @@ export interface IAuthJwtAccessTokenPayload {
     aud?: string;
     iss?: string;
     sub?: string;
+
 }
 
 export type IAuthJwtRefreshTokenPayload = Omit<

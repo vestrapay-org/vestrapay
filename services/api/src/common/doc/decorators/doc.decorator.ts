@@ -287,7 +287,7 @@ export function DocRequest(options?: IDocRequestOptions): MethodDecorator {
     const docs: Array<ClassDecorator | MethodDecorator> = [];
 
     if (options?.bodyType && options.bodyType in DocContentTypeMapping) {
-        docs.push(ApiConsumes(DocContentTypeMapping[options.bodyType]));
+        docs.push(ApiConsumes(DocContentTypeMapping[options.bodyType as keyof typeof DocContentTypeMapping]));
     } else {
         docs.push(ApiConsumes('none'));
     }
@@ -473,7 +473,7 @@ export function DocResponsePaging<T>(
     const docs = [
         ApiProduces('application/json'),
         ApiExtraModels(ResponsePagingDto),
-        ApiExtraModels(options.dto),
+        ApiExtraModels(options.dto!),
         ApiResponse({
             description:
                 options.httpStatus?.toString() ?? HttpStatus.OK.toString(),
@@ -494,7 +494,7 @@ export function DocResponsePaging<T>(
                     data: {
                         type: 'array',
                         items: {
-                            $ref: getSchemaPath(options.dto),
+                            $ref: getSchemaPath(options.dto!),
                         },
                     },
                 },

@@ -19,6 +19,7 @@ import {
     IPaginationIn,
     IPaginationNin,
     IPaginationNotEqual,
+    IPaginationQuery,
     IPaginationQueryFilterDateOptions,
     IPaginationQueryFilterEnumOptions,
     IPaginationQueryFilterEqualOptions,
@@ -90,9 +91,10 @@ export function PaginationQueryFilterInEnumPipe<T>(
                 });
             }
 
-            this.addToRequestInstance(metadata.data, finalValue);
+            const field = metadata.data!;
+            this.addToRequestInstance(field, finalValue);
 
-            const customField = options?.customField ?? metadata.data;
+            const customField = options?.customField ?? field;
             return {
                 [customField]: {
                     in: finalValue,
@@ -109,7 +111,7 @@ export function PaginationQueryFilterInEnumPipe<T>(
                           [field]: value,
                       }
                     : { [field]: value },
-            };
+            } as IPaginationQuery;
         }
     }
 
@@ -180,9 +182,10 @@ export function PaginationQueryFilterNinEnumPipe<T>(
                 });
             }
 
-            this.addToRequestInstance(metadata.data, finalValue);
+            const field = metadata.data!;
+            this.addToRequestInstance(field, finalValue);
 
-            const customField = options?.customField ?? metadata.data;
+            const customField = options?.customField ?? field;
             return {
                 [customField]: {
                     notIn: finalValue,
@@ -199,7 +202,7 @@ export function PaginationQueryFilterNinEnumPipe<T>(
                           [field]: value,
                       }
                     : { [field]: value },
-            };
+            } as IPaginationQuery;
         }
     }
 
@@ -235,7 +238,7 @@ export function PaginationQueryFilterEqualPipe<T>(
             }
 
             let finalValue: T;
-            if ('isBoolean' in options && options.isBoolean) {
+            if (options && 'isBoolean' in options && options.isBoolean) {
                 const booleanString = value.trim();
                 if (booleanString !== 'true' && booleanString !== 'false') {
                     throw new BadRequestException({
@@ -249,7 +252,7 @@ export function PaginationQueryFilterEqualPipe<T>(
                 }
 
                 finalValue = (booleanString === 'true') as T;
-            } else if ('isNumber' in options && options.isNumber) {
+            } else if (options && 'isNumber' in options && options.isNumber) {
                 finalValue = Number.parseFloat(value.trim()) as T;
 
                 if (isNaN(finalValue as number)) {
@@ -266,12 +269,13 @@ export function PaginationQueryFilterEqualPipe<T>(
                 finalValue = value.trim() as T;
             }
 
+            const field = metadata.data!;
             this.addToRequestInstance(
-                metadata.data,
+                field,
                 finalValue as string | number | boolean
             );
 
-            const customField = options?.customField ?? metadata.data;
+            const customField = options?.customField ?? field;
 
             return {
                 [customField]: {
@@ -292,7 +296,7 @@ export function PaginationQueryFilterEqualPipe<T>(
                           [field]: value,
                       }
                     : { [field]: value },
-            };
+            } as IPaginationQuery;
         }
     }
 
@@ -328,7 +332,7 @@ export function PaginationQueryFilterNotEqualPipe<T>(
             }
 
             let finalValue: T;
-            if ('isBoolean' in options && options.isBoolean) {
+            if (options && 'isBoolean' in options && options.isBoolean) {
                 const booleanString = value.trim();
                 if (booleanString !== 'true' && booleanString !== 'false') {
                     throw new BadRequestException({
@@ -342,7 +346,7 @@ export function PaginationQueryFilterNotEqualPipe<T>(
                 }
 
                 finalValue = (booleanString === 'true') as T;
-            } else if ('isNumber' in options && options.isNumber) {
+            } else if (options && 'isNumber' in options && options.isNumber) {
                 finalValue = Number.parseFloat(value.trim()) as T;
 
                 if (isNaN(finalValue as number)) {
@@ -359,12 +363,13 @@ export function PaginationQueryFilterNotEqualPipe<T>(
                 finalValue = value.trim() as T;
             }
 
+            const field = metadata.data!;
             this.addToRequestInstance(
-                metadata.data,
+                field,
                 finalValue as string | number | boolean
             );
 
-            const customField = options?.customField ?? metadata.data;
+            const customField = options?.customField ?? field;
 
             return {
                 [customField]: {
@@ -385,7 +390,7 @@ export function PaginationQueryFilterNotEqualPipe<T>(
                           [field]: value,
                       }
                     : { [field]: value },
-            };
+            } as IPaginationQuery;
         }
     }
 
@@ -437,9 +442,10 @@ export function PaginationQueryFilterDatePipe(
                 dayOf: options?.dayOf,
             });
 
-            this.addToRequestInstance(metadata.data, finalValue);
+            const field = metadata.data!;
+            this.addToRequestInstance(field, finalValue);
 
-            const customField = options?.customField ?? metadata.data;
+            const customField = options?.customField ?? field;
             const operation = options?.type
                 ? options.type === EnumPaginationFilterDateBetweenType.start
                     ? 'gte'
@@ -464,7 +470,7 @@ export function PaginationQueryFilterDatePipe(
                     : {
                           [field]: value,
                       },
-            };
+            } as IPaginationQuery;
         }
     }
 

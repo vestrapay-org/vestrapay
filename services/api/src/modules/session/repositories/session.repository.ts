@@ -32,7 +32,7 @@ export class SessionRepository {
                 where: {
                     ...where,
                     userId,
-                },
+                } as IPaginationQueryOffsetParams['where'],
                 include: {
                     user: true,
                 },
@@ -51,7 +51,7 @@ export class SessionRepository {
                 where: {
                     ...where,
                     userId,
-                },
+                } as IPaginationQueryCursorParams['where'],
                 include: {
                     user: true,
                 },
@@ -78,7 +78,7 @@ export class SessionRepository {
         });
     }
 
-    async findOneActive(userId: string, sessionId: string): Promise<Session> {
+    async findOneActive(userId: string, sessionId: string): Promise<Session | null> {
         const today = this.helperService.dateCreate();
 
         return this.databaseService.session.findFirst({
@@ -128,6 +128,6 @@ export class SessionRepository {
             include: {
                 user: true,
             },
-        });
+        }) as Promise<ISession>;
     }
 }

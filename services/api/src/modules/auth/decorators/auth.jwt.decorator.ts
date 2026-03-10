@@ -21,7 +21,7 @@ export const AuthJwtPayload = createParamDecorator(
         const { user } = ctx
             .switchToHttp()
             .getRequest<IRequestApp & { user: T }>();
-        return data ? user[data] : user;
+        return data ? (user as Record<string, unknown>)?.[data] as T : user;
     }
 );
 

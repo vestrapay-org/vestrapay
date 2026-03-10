@@ -122,10 +122,8 @@ services:
         hostname: postgres
         ports:
             - "5434:5432"
-        environment:
-            POSTGRES_USER: vestrapay
-            POSTGRES_PASSWORD: vestrapay
-            POSTGRES_DB: vestrapay
+        env_file:
+            - .env
         volumes:
             - postgres_data:/var/lib/postgresql/data
         networks:

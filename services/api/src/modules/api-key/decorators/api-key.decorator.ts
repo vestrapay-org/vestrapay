@@ -20,7 +20,7 @@ import { ApiKey, EnumApiKeyType } from '@prisma/client';
 export const ApiKeyPayload: () => ParameterDecorator = createParamDecorator(
     <T = ApiKey>(data: string, ctx: ExecutionContext): T => {
         const { __apiKey } = ctx.switchToHttp().getRequest<IRequestApp>();
-        return data ? __apiKey[data] : (__apiKey as T);
+        return data ? (__apiKey as Record<string, unknown>)?.[data] as T : (__apiKey as T);
     }
 );
 

@@ -46,7 +46,7 @@ export class IsTwoFactorBackupCodeConstraint implements ValidatorConstraintInter
  * Decorator for validating 2FA backup code on DTO property
  */
 export function IsTwoFactorBackupCode(validationOptions?: ValidationOptions) {
-    return function (object: unknown, propertyName: string): void {
+    return function (object: object, propertyName: string): void {
         registerDecorator({
             name: 'IsTwoFactorBackupCode',
             target: object.constructor,

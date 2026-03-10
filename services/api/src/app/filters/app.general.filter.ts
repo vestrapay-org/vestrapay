@@ -57,8 +57,8 @@ export class AppGeneralFilter implements ExceptionFilter {
         const xTimezone = this.helperService.dateGetZone(today);
         const xVersion =
             request.__version ??
-            this.configService.get<string>('app.urlVersion.version');
-        const xRepoVersion = this.configService.get<string>('app.version');
+            this.configService.get<string>('app.urlVersion.version')!;
+        const xRepoVersion = this.configService.get<string>('app.version')!;
         const xRequestId = String(request.id);
         const xCorrelationId = String(request.correlationId);
         const metadata: ResponseMetadataDto = {

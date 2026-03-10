@@ -58,21 +58,21 @@ export class AuthUtil {
     ) {
         this.jwtAccessTokenKid = this.configService.get<string>(
             'auth.jwt.accessToken.kid'
-        );
+        )!;
         this.jwtAccessTokenExpirationTimeInSeconds =
             this.configService.get<number>(
                 'auth.jwt.accessToken.expirationTimeInSeconds'
-            );
+            )!;
         this.jwtRefreshTokenKid = this.configService.get<string>(
             'auth.jwt.refreshToken.kid'
-        );
+        )!;
         this.jwtRefreshTokenExpirationTimeInSeconds =
             this.configService.get<number>(
                 'auth.jwt.refreshToken.expirationTimeInSeconds'
-            );
+            )!;
 
         const jwtAccessTokenPrivateKeyBuffer = Buffer.from(
-            this.configService.get<string>('auth.jwt.accessToken.privateKey'),
+            this.configService.get<string>('auth.jwt.accessToken.privateKey')!,
             'base64'
         );
         this.jwtAccessTokenPrivateKey = createPrivateKey({
@@ -81,7 +81,7 @@ export class AuthUtil {
             type: 'pkcs8',
         }).export({ type: 'pkcs8', format: 'pem' }) as string;
         const jwtAccessTokenPublicKeyBuffer = Buffer.from(
-            this.configService.get<string>('auth.jwt.accessToken.publicKey'),
+            this.configService.get<string>('auth.jwt.accessToken.publicKey')!,
             'base64'
         );
         this.jwtAccessTokenPublicKey = createPublicKey({
@@ -94,10 +94,10 @@ export class AuthUtil {
         }) as string;
         this.jwtAccessTokenAlgorithm = this.configService.get<Algorithm>(
             'auth.jwt.accessToken.algorithm'
-        );
+        )!;
 
         const jwtRefreshTokenPrivateKeyBuffer = Buffer.from(
-            this.configService.get<string>('auth.jwt.refreshToken.privateKey'),
+            this.configService.get<string>('auth.jwt.refreshToken.privateKey')!,
             'base64'
         );
         this.jwtRefreshTokenPrivateKey = createPrivateKey({
@@ -106,7 +106,7 @@ export class AuthUtil {
             type: 'pkcs8',
         }).export({ type: 'pkcs8', format: 'pem' }) as string;
         const jwtRefreshTokenPublicKeyBuffer = Buffer.from(
-            this.configService.get<string>('auth.jwt.refreshToken.publicKey'),
+            this.configService.get<string>('auth.jwt.refreshToken.publicKey')!,
             'base64'
         );
         this.jwtRefreshTokenPublicKey = createPublicKey({
@@ -119,32 +119,32 @@ export class AuthUtil {
         }) as string;
         this.jwtRefreshTokenAlgorithm = this.configService.get<Algorithm>(
             'auth.jwt.refreshToken.algorithm'
-        );
+        )!;
 
-        this.jwtPrefix = this.configService.get<string>('auth.jwt.prefix');
-        this.jwtAudience = this.configService.get<string>('auth.jwt.audience');
-        this.jwtIssuer = this.configService.get<string>('auth.jwt.issuer');
-        this.jwtHeader = this.configService.get<string>('auth.jwt.header');
+        this.jwtPrefix = this.configService.get<string>('auth.jwt.prefix')!;
+        this.jwtAudience = this.configService.get<string>('auth.jwt.audience')!;
+        this.jwtIssuer = this.configService.get<string>('auth.jwt.issuer')!;
+        this.jwtHeader = this.configService.get<string>('auth.jwt.header')!;
 
         // password
         this.passwordExpiredInSeconds = this.configService.get<number>(
             'auth.password.expiredInSeconds'
-        );
+        )!;
         this.passwordExpiredTemporaryInSeconds = this.configService.get<number>(
             'auth.password.expiredTemporaryInSeconds'
-        );
+        )!;
         this.passwordSaltLength = this.configService.get<number>(
             'auth.password.saltLength'
-        );
+        )!;
         this.passwordPeriodInSeconds = this.configService.get<number>(
             'auth.password.periodInSeconds'
-        );
+        )!;
         this.passwordAttempt = this.configService.get<boolean>(
             'auth.password.attempt'
-        );
+        )!;
         this.passwordMaxAttempt = this.configService.get<number>(
             'auth.password.maxAttempt'
-        );
+        )!;
     }
 
     /**
@@ -358,7 +358,7 @@ export class AuthUtil {
      */
     checkPasswordAttempt(user: User): boolean {
         return this.passwordAttempt
-            ? user.passwordAttempt >= this.passwordMaxAttempt
+            ? (user.passwordAttempt ?? 0) >= this.passwordMaxAttempt
             : false;
     }
 

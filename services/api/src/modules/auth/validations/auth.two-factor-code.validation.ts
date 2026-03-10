@@ -46,7 +46,7 @@ export class IsTwoFactorCodeConstraint implements ValidatorConstraintInterface {
  * Decorator for validating 2FA TOTP code on DTO property
  */
 export function IsTwoFactorCode(validationOptions?: ValidationOptions) {
-    return function (object: unknown, propertyName: string): void {
+    return function (object: object, propertyName: string): void {
         registerDecorator({
             name: 'IsTwoFactorCode',
             target: object.constructor,

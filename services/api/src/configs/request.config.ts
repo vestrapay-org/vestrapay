@@ -27,13 +27,13 @@ export default registerAs(
     (): IConfigRequest => ({
         body: {
             json: {
-                limitInBytes: bytes('500kb'),
+                limitInBytes: bytes('500kb')!,
             },
             text: {
-                limitInBytes: bytes('1mb'),
+                limitInBytes: bytes('1mb')!,
             },
             urlencoded: {
-                limitInBytes: bytes('1mb'),
+                limitInBytes: bytes('1mb')!,
             },
             applicationOctetStream: {
                 limitInBytes: FileSizeInBytes,

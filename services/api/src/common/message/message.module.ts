@@ -24,7 +24,7 @@ export class MessageModule {
                     resolvers: [new HeaderResolver(['x-custom-lang'])],
                     useFactory: (configService: ConfigService) => ({
                         fallbackLanguage: configService
-                            .get<string[]>('message.availableLanguage')
+                            .get<string[]>('message.availableLanguage')!
                             .join(','),
                         fallbacks: Object.values(EnumMessageLanguage).reduce(
                             (a, v) => ({ ...a, [`${v}-*`]: v }),

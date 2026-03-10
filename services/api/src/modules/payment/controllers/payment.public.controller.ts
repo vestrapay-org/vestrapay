@@ -255,6 +255,17 @@ ss(JSON.stringify(d),'e');
         return { status: 'ok' };
     }
 
+    @ApiExcludeEndpoint()
+    @HttpCode(HttpStatus.OK)
+    @Post('/webhook/korapay')
+    async korapayWebhook(
+        @Body() body: Record<string, unknown>,
+        @Headers() headers: Record<string, string>
+    ) {
+        await this.paymentService.handleKorapayWebhook(body, headers);
+        return { status: 'ok' };
+    }
+
     @PaymentPublicVerifyDoc()
     @Response('payment.verify')
     @ApiKeyProtected()

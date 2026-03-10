@@ -64,10 +64,10 @@ export function IsPassword(
     minLength?: number,
     validationOptions?: ValidationOptions
 ) {
-    return function (object: unknown, propertyName: string): void {
+    return function (object: object, propertyName: string): void {
         registerDecorator({
             name: 'IsPassword',
-            target: object.constructor,
+            target: object.constructor as Function,
             propertyName: propertyName,
             options: validationOptions,
             constraints: minLength ? [minLength] : [],

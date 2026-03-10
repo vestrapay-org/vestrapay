@@ -30,7 +30,7 @@ export class MigrationApiKeySeed
     ) {
         super();
 
-        this.env = this.configService.get<EnumAppEnvironment>('app.env');
+        this.env = this.configService.get<EnumAppEnvironment>('app.env')!;
         this.apiKeys = migrationApiKeyData[this.env];
     }
 
@@ -55,7 +55,7 @@ export class MigrationApiKeySeed
                             hash: hashed,
                             key: key,
                             type: apiKey.type,
-                            name: apiKey.name,
+                            name: apiKey.name!,
                             isActive: true,
                         },
                         update: {},

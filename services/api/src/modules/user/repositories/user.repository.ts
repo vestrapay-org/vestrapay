@@ -56,7 +56,7 @@ export class UserRepository {
                 ...status,
                 ...role,
                 deletedAt: null,
-            },
+            } as IPaginationQueryOffsetParams['where'],
             include: {
                 role: { include: { abilities: true } },
                 twoFactor: true,
@@ -76,7 +76,7 @@ export class UserRepository {
                 ...status,
                 ...role,
                 deletedAt: null,
-            },
+            } as IPaginationQueryCursorParams['where'],
             include: {
                 role: { include: { abilities: true } },
                 twoFactor: true,
@@ -93,7 +93,7 @@ export class UserRepository {
                 role: { include: { abilities: true } },
                 twoFactor: true,
             },
-        });
+        }) as Promise<IUser[]>;
     }
 
     async findAllExport(
@@ -110,7 +110,7 @@ export class UserRepository {
                 role: { include: { abilities: true } },
                 twoFactor: true,
             },
-        });
+        }) as Promise<IUser[]>;
     }
 
     async findOneById(id: string): Promise<User | null> {
@@ -138,7 +138,7 @@ export class UserRepository {
                 role: { include: { abilities: true } },
                 twoFactor: true,
             },
-        });
+        }) as Promise<IUser | null>;
     }
 
     async findOneProfileById(id: string): Promise<IUserProfile | null> {
@@ -148,7 +148,7 @@ export class UserRepository {
                 role: { include: { abilities: true } },
                 twoFactor: true,
             },
-        });
+        }) as Promise<IUserProfile | null>;
     }
 
     async findOneActiveProfileById(id: string): Promise<IUserProfile | null> {
@@ -158,7 +158,7 @@ export class UserRepository {
                 role: { include: { abilities: true } },
                 twoFactor: true,
             },
-        });
+        }) as Promise<IUserProfile | null>;
     }
 
     async findOneWithRoleById(id: string): Promise<IUser | null> {
@@ -168,7 +168,7 @@ export class UserRepository {
                 role: { include: { abilities: true } },
                 twoFactor: true,
             },
-        });
+        }) as Promise<IUser | null>;
     }
 
     async existByEmail(email: string): Promise<{ id: string } | null> {
@@ -537,7 +537,7 @@ export class UserRepository {
                 role: { include: { abilities: true } },
                 twoFactor: true,
             },
-        });
+        }) as Promise<IUser>;
     }
 
     async setupTwoFactor(
@@ -564,7 +564,7 @@ export class UserRepository {
                 role: { include: { abilities: true } },
                 twoFactor: true,
             },
-        });
+        }) as Promise<IUser>;
     }
 
     async enableTwoFactor(
@@ -574,7 +574,7 @@ export class UserRepository {
     ): Promise<IUser> {
         const now = this.helperService.dateCreate();
 
-        return this.databaseService.$transaction<IUser>(async tx => {
+        return this.databaseService.$transaction(async tx => {
             const twoFactor = await tx.twoFactor.findUnique({
                 where: { userId },
                 select: {
@@ -588,7 +588,7 @@ export class UserRepository {
                     twoFactor: {
                         update: {
                             enabled: true,
-                            confirmedAt: twoFactor.confirmedAt ?? now,
+                            confirmedAt: twoFactor?.confirmedAt ?? now,
                             backupCodes: backupCodesHashed,
                             lastUsedAt: now,
                             updatedAt: now,
@@ -600,8 +600,8 @@ export class UserRepository {
                     role: { include: { abilities: true } },
                     twoFactor: true,
                 },
-            });
-        });
+            }) as unknown as IUser;
+        }) as Promise<IUser>;
     }
 
     async disableTwoFactor(
@@ -630,7 +630,7 @@ export class UserRepository {
                 role: { include: { abilities: true } },
                 twoFactor: true,
             },
-        });
+        }) as Promise<IUser>;
     }
 
     async regenerateTwoFactorBackupCodes(
@@ -655,7 +655,7 @@ export class UserRepository {
                 role: { include: { abilities: true } },
                 twoFactor: true,
             },
-        });
+        }) as Promise<IUser>;
     }
 
     async resetTwoFactorByAdmin(
@@ -689,7 +689,7 @@ export class UserRepository {
                 role: { include: { abilities: true } },
                 twoFactor: true,
             },
-        });
+        }) as Promise<IUser>;
     }
 
     async increaseTwoFactorAttempt(userId: string): Promise<User> {

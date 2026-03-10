@@ -16,13 +16,13 @@ export class RequestCorsMiddleware implements NestMiddleware {
     constructor(private readonly configService: ConfigService) {
         this.allowedOrigin = this.configService.get<
             string | boolean | string[]
-        >('request.cors.allowedOrigin');
+        >('request.cors.allowedOrigin')!;
         this.allowedMethod = this.configService.get<string[]>(
             'request.cors.allowedMethod'
-        );
+        )!;
         this.allowedHeader = this.configService.get<string[]>(
             'request.cors.allowedHeader'
-        );
+        )!;
     }
 
     /**
@@ -55,7 +55,7 @@ export class RequestCorsMiddleware implements NestMiddleware {
      * @param callback - Callback function to execute with validation result
      */
     private originValidator(
-        origin: string,
+        origin: string | undefined,
         callback: (err: Error | null, allow?: boolean) => void
     ): void {
         if (!origin) {

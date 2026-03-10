@@ -120,7 +120,7 @@ export class SessionService implements ISessionService {
             this.sessionUtil.deleteOneLogin(userId, sessionId),
         ]);
 
-        return;
+        return {};
     }
 
     /**

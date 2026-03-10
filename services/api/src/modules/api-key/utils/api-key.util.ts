@@ -23,8 +23,8 @@ export class ApiKeyUtil {
     ) {
         this.cachePrefixKey = this.configService.get<string>(
             'auth.xApiKey.cachePrefixKey'
-        );
-        this.header = this.configService.get<string>('auth.xApiKey.header');
+        )!;
+        this.header = this.configService.get<string>('auth.xApiKey.header')!;
     }
 
     mapList(apiKeys: ApiKey[]): ApiKeyDto[] {
@@ -91,8 +91,8 @@ export class ApiKeyUtil {
 
     isExpired(
         apiKey: {
-            startAt?: Date;
-            endAt?: Date;
+            startAt?: Date | null;
+            endAt?: Date | null;
         },
         currentDate: Date
     ): boolean {
@@ -105,8 +105,8 @@ export class ApiKeyUtil {
 
     isNotYetActive(
         apiKey: {
-            startAt?: Date;
-            endAt?: Date;
+            startAt?: Date | null;
+            endAt?: Date | null;
         },
         currentDate: Date
     ): boolean {
@@ -123,8 +123,8 @@ export class ApiKeyUtil {
 
     isValid(
         apiKey: {
-            startAt?: Date;
-            endAt?: Date;
+            startAt?: Date | null;
+            endAt?: Date | null;
             isActive: boolean;
         },
         currentDate: Date

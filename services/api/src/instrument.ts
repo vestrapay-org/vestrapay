@@ -48,6 +48,7 @@ if (loggerConfigs.sentry.dsn) {
                 const url = event.request.url;
 
                 if (
+                    url &&
                     helperService.checkUrlMatchesPatterns(
                         url,
                         LoggerExcludedRoutes

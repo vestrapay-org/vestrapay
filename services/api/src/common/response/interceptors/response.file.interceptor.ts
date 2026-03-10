@@ -217,8 +217,8 @@ export class ResponseFileInterceptor implements NestInterceptor {
         const xTimezone = this.helperService.dateGetZone(today);
         const xVersion =
             request.__version ??
-            this.configService.get<string>('app.urlVersion.version');
-        const xRepoVersion = this.configService.get<string>('app.version');
+            this.configService.get<string>('app.urlVersion.version')!;
+        const xRepoVersion = this.configService.get<string>('app.version')!;
 
         response.setHeader('x-custom-lang', xLanguage);
         response.setHeader('x-timestamp', xTimestamp);

@@ -37,8 +37,8 @@ export class DatabaseService
             errorFormat: 'pretty',
         });
 
-        this.isDebugMode = this.configService.get<boolean>('database.debug');
-        this.prettier = this.configService.get<boolean>('logger.prettier');
+        this.isDebugMode = this.configService.get<boolean>('database.debug')!;
+        this.prettier = this.configService.get<boolean>('logger.prettier')!;
     }
 
     /**
@@ -52,11 +52,11 @@ export class DatabaseService
                     status: 'up',
                 },
             };
-        } catch (error) {
+        } catch (error: unknown) {
             return {
                 database: {
                     status: 'down',
-                    error: error.message,
+                    error: error instanceof Error ? error.message : String(error),
                 },
             };
         }

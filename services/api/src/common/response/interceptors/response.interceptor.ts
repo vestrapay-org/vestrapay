@@ -69,11 +69,11 @@ export class ResponseInterceptor<T> implements NestInterceptor {
                         ResponseMessagePathMetaKey,
                         context.getHandler()
                     );
-                    let messageProperties: IMessageProperties;
+                    let messageProperties: IMessageProperties | undefined;
 
                     let httpStatus: HttpStatus = response.statusCode;
                     let statusCode: number = response.statusCode;
-                    let data: T = undefined;
+                    let data: T | undefined = undefined;
 
                     const metadata: ResponseMetadataDto =
                         this.createResponseMetadata(request);
@@ -82,12 +82,12 @@ export class ResponseInterceptor<T> implements NestInterceptor {
                     if (responseData) {
                         const { metadata: responseMetadata } = responseData;
 
-                        data = responseData.data ?? undefined;
+                        data = responseData.data as T | undefined ?? undefined;
                         httpStatus = responseMetadata?.httpStatus ?? httpStatus;
                         statusCode = responseMetadata?.statusCode ?? statusCode;
                         messagePath =
                             responseMetadata?.messagePath ?? messagePath;
-                        messageProperties = responseMetadata?.messageProperties;
+                        messageProperties = responseMetadata?.messageProperties ?? undefined;
                     }
 
                     const message: string = this.messageService.setMessage(
@@ -135,7 +135,7 @@ export class ResponseInterceptor<T> implements NestInterceptor {
             timezone: this.helperService.dateGetZone(today),
             path: request.path,
             version: xVersion,
-            repoVersion: this.configService.get<string>('app.version'),
+            repoVersion: this.configService.get<string>('app.version')!,
             requestId: String(request.id),
             correlationId: String(request.correlationId),
         };

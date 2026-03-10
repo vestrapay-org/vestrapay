@@ -35,8 +35,8 @@ export class AppHttpFilter implements ExceptionFilter {
         private readonly configService: ConfigService,
         private readonly helperService: HelperService
     ) {
-        this.globalPrefix = this.configService.get<string>('app.globalPrefix');
-        this.docPrefix = this.configService.get<string>('doc.prefix');
+        this.globalPrefix = this.configService.get<string>('app.globalPrefix')!;
+        this.docPrefix = this.configService.get<string>('doc.prefix')!;
     }
 
     /**
@@ -68,7 +68,7 @@ export class AppHttpFilter implements ExceptionFilter {
         let statusHttp: HttpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
         let messagePath = `http.${statusHttp}`;
         let statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-        let messageProperties: IMessageProperties;
+        let messageProperties: IMessageProperties | undefined;
         let data: unknown;
 
         const today = this.helperService.dateCreate();
@@ -79,8 +79,8 @@ export class AppHttpFilter implements ExceptionFilter {
         const xTimezone = this.helperService.dateGetZone(today);
         const xVersion =
             request.__version ??
-            this.configService.get<string>('app.urlVersion.version');
-        const xRepoVersion = this.configService.get<string>('app.version');
+            this.configService.get<string>('app.urlVersion.version')!;
+        const xRepoVersion = this.configService.get<string>('app.version')!;
         const xRequestId = String(request.id);
         const xCorrelationId = String(request.correlationId);
         let metadata: ResponseMetadataDto = {
@@ -102,7 +102,7 @@ export class AppHttpFilter implements ExceptionFilter {
         if (this.isErrorException(responseException)) {
             statusCode = responseException.statusCode;
             messagePath = responseException.message;
-            messageProperties = responseException.messageProperties;
+            messageProperties = responseException.messageProperties!;
             data = responseException.data;
 
             metadata = {
@@ -144,7 +144,7 @@ export class AppHttpFilter implements ExceptionFilter {
      * @returns {boolean} True if object has statusCode and message properties
      */
     isErrorException(obj: unknown): obj is IAppException<unknown> {
-        return typeof obj === 'object'
+        return typeof obj === 'object' && obj !== null
             ? 'statusCode' in obj && 'message' in obj
             : false;
     }

@@ -13,13 +13,13 @@ export type IPaginationQueryFilter = Record<
 export interface IPaginationQuery {
     search?: string;
     filters?: IPaginationQueryFilter;
-    page: number;
-    perPage: number;
+    page?: number;
+    perPage?: number;
     cursor?: string;
-    orderBy: string;
-    orderDirection: EnumPaginationOrderDirectionType;
-    availableSearch: string[];
-    availableOrderBy: string[];
+    orderBy?: string;
+    orderDirection?: EnumPaginationOrderDirectionType;
+    availableSearch?: string[];
+    availableOrderBy?: string[];
 }
 
 export interface IPaginationQueryOffsetOptions {
