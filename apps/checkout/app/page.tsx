@@ -11,7 +11,7 @@ import { USSDPayment } from "@/components/ussd-payment";
 import { QRCodePayment } from "@/components/qr-payment";
 import { MERCHANT } from "@/lib/constants";
 import { formatCurrency } from "@/lib/formatters";
-import type { PaymentMethod, PaymentComponentProps, SVGIconProps } from "@/lib/types";
+import type { Merchant, PaymentMethod, PaymentComponentProps, SVGIconProps } from "@/lib/types";
 
 interface PaymentMethodConfig {
   readonly id: PaymentMethod;
@@ -56,8 +56,6 @@ export default function CheckoutPage(): React.ReactNode {
     };
   }, []);
 
-  const formattedAmount = formatCurrency(MERCHANT.amount, MERCHANT.currency);
-
   const handleMethodSwitch = useCallback(
     (method: PaymentMethod): void => {
       if (method === activeMethod) return;
@@ -70,6 +68,26 @@ export default function CheckoutPage(): React.ReactNode {
     },
     [activeMethod],
   );
+
+  const [merchant, setMerchant] = useState<Merchant>(MERCHANT);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const amountParam = params.get("amount");
+    const amount = amountParam ? Number(amountParam) : MERCHANT.amount;
+
+    setMerchant({
+      name: params.get("name") ?? MERCHANT.name,
+      email: params.get("email") ?? MERCHANT.email,
+      amount: Number.isNaN(amount) || amount <= 0 ? MERCHANT.amount : amount,
+      currency: params.get("currency") ?? MERCHANT.currency,
+      reference: params.get("reference") ?? MERCHANT.reference,
+    });
+  }, []);
+
+  const formattedAmount = formatCurrency(merchant.amount, merchant.currency);
 
   const ActiveComponent = PAYMENT_COMPONENTS[displayMethod];
   const handlePaymentSuccess = useCallback((reference: string) => {
@@ -129,9 +147,9 @@ export default function CheckoutPage(): React.ReactNode {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-[#3c4257] sm:text-[15px]">
-                    {MERCHANT.name}
+                    {merchant.name}
                   </p>
-                  <p className="mt-0.5 text-xs text-[#6b7c93] sm:text-sm">{MERCHANT.email}</p>
+                  <p className="mt-0.5 text-xs text-[#6b7c93] sm:text-sm">{merchant.email}</p>
                 </div>
                 <p className="mt-2 text-2xl font-semibold tracking-tight text-[#3c4257] sm:mt-3 sm:text-[32px]">
                   {formattedAmount}
@@ -180,10 +198,10 @@ export default function CheckoutPage(): React.ReactNode {
               ) : (
                 <ActiveComponent
                   amount={formattedAmount}
-                  amountInSmallestUnit={MERCHANT.amount}
-                  reference={MERCHANT.reference}
-                  email={MERCHANT.email}
-                  currency={MERCHANT.currency}
+                  amountInSmallestUnit={merchant.amount}
+                  reference={merchant.reference}
+                  email={merchant.email}
+                  currency={merchant.currency}
                   onPaymentSuccess={handlePaymentSuccess}
                   onPaymentFailed={handlePaymentFailed}
                 />
