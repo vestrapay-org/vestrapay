@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Lock, X } from "@/components/icons";
 import { CircleCheck, CircleX } from "@/components/icons";
 import { CardIcon, BankIcon, TransferIcon, USSDIcon, QRIcon } from "@/components/payment-icons";
@@ -70,18 +69,23 @@ export default function CheckoutPage(): React.ReactNode {
     [activeMethod],
   );
 
-  const searchParams = useSearchParams();
-  const merchant = useMemo<Merchant>(() => {
-    const amountParam = searchParams?.get("amount");
+  const [merchant, setMerchant] = useState<Merchant>(MERCHANT);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const params = new URLSearchParams(window.location.search);
+    const amountParam = params.get("amount");
     const amount = amountParam ? Number(amountParam) : MERCHANT.amount;
-    return {
-      name: searchParams?.get("name") ?? MERCHANT.name,
-      email: searchParams?.get("email") ?? MERCHANT.email,
+
+    setMerchant({
+      name: params.get("name") ?? MERCHANT.name,
+      email: params.get("email") ?? MERCHANT.email,
       amount: Number.isNaN(amount) || amount <= 0 ? MERCHANT.amount : amount,
-      currency: searchParams?.get("currency") ?? MERCHANT.currency,
-      reference: searchParams?.get("reference") ?? MERCHANT.reference,
-    };
-  }, [searchParams]);
+      currency: params.get("currency") ?? MERCHANT.currency,
+      reference: params.get("reference") ?? MERCHANT.reference,
+    });
+  }, []);
 
   const formattedAmount = formatCurrency(merchant.amount, merchant.currency);
 
