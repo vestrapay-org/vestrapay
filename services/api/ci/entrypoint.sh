@@ -2,7 +2,7 @@
 set -e
 
 echo "Running database migrations..."
-pnpm exec prisma db push --accept-data-loss --skip-generate
+npx prisma db push --accept-data-loss --skip-generate
 
 echo "Running seeders..."
 node dist/migration.js apiKey --type seed || true
