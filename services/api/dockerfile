@@ -1,19 +1,32 @@
-FROM node:lts-alpine
+FROM node:lts-alpine AS base
 LABEL maintainer="dev@vestrapay.io"
 
 WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
-COPY package.json pnpm-lock.yaml ./
 
-RUN set -x && pnpm install --frozen-lockfile
+# --- Dependencies ---
+FROM base AS deps
+COPY package.json pnpm-lock.yaml ./
+RUN set -x && pnpm install --frozen-lockfile --ignore-scripts
+
+# --- Builder ---
+FROM deps AS builder
+COPY . .
+RUN pnpm db:generate
+RUN pnpm build
+
+# --- Production ---
+FROM base AS production
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/prisma ./prisma
 
 RUN touch .env
 
-COPY . .
-
-RUN pnpm db:generate
-
 EXPOSE 3000
 
-CMD [ "pnpm", "start:dev" ]
+CMD [ "pnpm", "start:prod" ]
