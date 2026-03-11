@@ -9,14 +9,14 @@ FROM base AS deps
 WORKDIR /app
 COPY pnpm-lock.yaml pnpm-workspace.yaml .npmrc package.json ./
 COPY services/api/package.json ./services/api/package.json
-RUN --mount=type=cache,id=vestrapay-pnpm,target=/pnpm/store \
+RUN --mount=type=cache,id=s/86e691c5-8215-479a-9543-f608c49b5775-pnpm,target=/pnpm/store \
     pnpm install --frozen-lockfile --filter=@vestrapay/api
 
 # ── Builder (also used by migrator + seeder via docker-compose) ──
 FROM deps AS builder
 COPY services/api/ ./services/api/
 WORKDIR /app/services/api
-RUN --mount=type=cache,id=vestrapay-pnpm,target=/pnpm/store \
+RUN --mount=type=cache,id=s/86e691c5-8215-479a-9543-f608c49b5775-pnpm,target=/pnpm/store \
     pnpm db:generate
 RUN pnpm build
 RUN pnpm deploy --legacy --filter=@vestrapay/api --prod /app/deployed
