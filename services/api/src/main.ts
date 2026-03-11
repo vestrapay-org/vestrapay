@@ -31,12 +31,6 @@ async function bootstrap(): Promise<void> {
     )!;
     const version: string = configService.get<string>('app.urlVersion.version')!;
     const appName: string = configService.get<string>('app.name')!;
-    const databaseDebug = configService.get<boolean>('database.debug');
-    const loggerAuto = configService.get<boolean>('logger.auto');
-    const loggerDebugEnable = configService.get<boolean>('logger.enable');
-    const loggerDebugLevel = configService.get<string>('logger.level');
-
-    // enable
     const versionEnable: string = configService.get<string>(
         'app.urlVersion.enable'
     )!;
@@ -102,25 +96,9 @@ async function bootstrap(): Promise<void> {
     // Listen
     await app.listen(port, host);
 
-    logger.log('=='.repeat(30), 'NestApplication');
-    logger.log(`App Environment: ${env}`, 'NestApplication');
-    logger.log(`App Name: ${appName}`, 'NestApplication');
-    logger.log(`App Global Prefix: ${globalPrefix}`, 'NestApplication');
     logger.log(
-        `App Versioning Prefix: /${versioningPrefix}`,
-        'NestApplication'
+        `${appName} started on http://${host}:${port}${globalPrefix} [${env}]`
     );
-    logger.log(`App Version: ${version}`, 'NestApplication');
-    logger.log(`App Timezone: ${timezone}`, 'NestApplication');
-    logger.log(
-        `App URL: http://${host}:${port}${globalPrefix}`,
-        'NestApplication'
-    );
-    logger.log(`Database Debug: ${databaseDebug}`, 'NestApplication');
-    logger.log(`Logger Auto: ${loggerAuto}`, 'NestApplication');
-    logger.log(`Logger Debug Enable: ${loggerDebugEnable}`, 'NestApplication');
-    logger.log(`Logger Debug Level: ${loggerDebugLevel}`, 'NestApplication');
-    logger.log('=='.repeat(30), 'NestApplication');
 
     return;
 }
