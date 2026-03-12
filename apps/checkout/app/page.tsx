@@ -10,7 +10,7 @@ import { TransferPayment } from "@/components/transfer-payment";
 import { USSDPayment } from "@/components/ussd-payment";
 import { QRCodePayment } from "@/components/qr-payment";
 import { MERCHANT } from "@/lib/constants";
-import { formatCurrency } from "@/lib/formatters";
+import { formatCurrency, toSmallestCurrencyUnit } from "@/lib/formatters";
 import type { Merchant, PaymentMethod, PaymentComponentProps, SVGIconProps } from "@/lib/types";
 
 interface PaymentMethodConfig {
@@ -88,6 +88,7 @@ export default function CheckoutPage(): React.ReactNode {
   }, []);
 
   const formattedAmount = formatCurrency(merchant.amount, merchant.currency);
+  const amountInSmallestUnit = toSmallestCurrencyUnit(merchant.amount, merchant.currency);
 
   const ActiveComponent = PAYMENT_COMPONENTS[displayMethod];
   const handlePaymentSuccess = useCallback((reference: string) => {
@@ -198,7 +199,7 @@ export default function CheckoutPage(): React.ReactNode {
               ) : (
                 <ActiveComponent
                   amount={formattedAmount}
-                  amountInSmallestUnit={merchant.amount}
+                  amountInSmallestUnit={amountInSmallestUnit}
                   reference={merchant.reference}
                   email={merchant.email}
                   currency={merchant.currency}

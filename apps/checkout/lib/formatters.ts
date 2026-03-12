@@ -18,3 +18,20 @@ export function formatCurrency(amount: number, currency: string): string {
     minimumFractionDigits: 2,
   }).format(amount);
 }
+
+export function toSmallestCurrencyUnit(amount: number, currency: string): number {
+  // All known supported currencies are 2-decimal (e.g. NGN, USD, EUR).
+  // The API expects smallest currency units (kobo for NGN, cents for USD).
+  if (Number.isNaN(amount) || amount < 0) {
+    return 0;
+  }
+
+  switch (currency) {
+    case "NGN":
+    case "USD":
+    case "EUR":
+      return Math.round(amount * 100);
+    default:
+      return Math.round(amount * 100);
+  }
+}
