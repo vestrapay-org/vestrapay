@@ -88,6 +88,8 @@ export class MpgsCardAdapter implements ICardProcessor {
             }
         );
 
+        this.logger.log(`initiate3dsAuth response: ${JSON.stringify(data)}`);
+
         const authentication = data.authentication as Record<string, unknown>;
         const response = data.response as Record<string, unknown>;
         const redirect = authentication?.redirect as Record<string, unknown>;
@@ -193,6 +195,8 @@ export class MpgsCardAdapter implements ICardProcessor {
             `/order/${params.orderId}/transaction/${payTxnId}`,
             body
         );
+
+        this.logger.log(`pay response: ${JSON.stringify(data)}`);
 
         const response = data.response as Record<string, unknown>;
         const transaction = data.transaction as Record<string, unknown>;
