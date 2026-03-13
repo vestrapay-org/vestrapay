@@ -1,4 +1,4 @@
-import { Logger } from '@nestjs/common';
+import { BadRequestException, Logger } from '@nestjs/common';
 
 export class ProcessorHttpClient {
     constructor(
@@ -33,9 +33,13 @@ export class ProcessorHttpClient {
         const data = (await response.json()) as Record<string, unknown>;
 
         if (!response.ok) {
+            const msg =
+                (data.message as string) ??
+                `Processor request failed with status ${response.status}`;
             this.logger.error(
                 `HTTP ${response.status} on ${method} ${path}: ${JSON.stringify(data)}`
             );
+            throw new BadRequestException(msg);
         }
 
         return data;
