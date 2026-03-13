@@ -2,6 +2,8 @@ import type {
   ApiResponse,
   ChargeCardData,
   ChargeCardRequest,
+  ChargeBankTransferData,
+  ChargeBankTransferRequest,
   ThreeDsCompleteData,
   ThreeDsCompleteRequest,
   VerifyTransactionData,
@@ -46,6 +48,15 @@ export async function complete3ds(
 ): Promise<ApiResponse<ThreeDsCompleteData>> {
   return apiFetch<ApiResponse<ThreeDsCompleteData>>(
     "/api/v1/public/payment/charge/card/3ds-complete",
+    { body: req },
+  );
+}
+
+export async function chargeBankTransfer(
+  req: ChargeBankTransferRequest,
+): Promise<ApiResponse<ChargeBankTransferData>> {
+  return apiFetch<ApiResponse<ChargeBankTransferData>>(
+    "/api/v1/public/payment/charge/bank-transfer",
     { body: req },
   );
 }
