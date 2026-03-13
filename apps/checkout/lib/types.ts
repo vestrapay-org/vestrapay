@@ -86,6 +86,22 @@ export interface ThreeDsCompleteRequest {
 
 export type ThreeDsCompleteData = ChargeCardData;
 
+export interface ChargeBankTransferRequest {
+  readonly amount: number;
+  readonly currency: string;
+  readonly email: string;
+  readonly description?: string;
+}
+
+export interface ChargeBankTransferData {
+  readonly status: string;
+  readonly reference: string;
+  readonly accountNumber: string;
+  readonly bankName: string;
+  readonly accountName: string;
+  readonly expiresAt: string;
+}
+
 export type VerifyTransactionStatus = "pending" | "processing" | "success" | "failed";
 
 export interface VerifyTransactionData {
