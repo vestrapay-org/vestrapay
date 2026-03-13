@@ -59,7 +59,19 @@ export default async function (app: NestApplication): Promise<void> {
             deepScanRoutes: true,
         });
 
-        const document = fullDocument;
+        // Only expose payment endpoints in Swagger
+        const allowedPrefixes = ['/api/v1/public/payment/'];
+        const document = {
+            ...fullDocument,
+            paths: Object.fromEntries(
+                Object.entries(fullDocument.paths).filter(([path]) =>
+                    allowedPrefixes.some(prefix => path.startsWith(prefix))
+                )
+            ),
+            tags: (fullDocument.tags ?? []).filter(t =>
+                t.name === 'modules.public.payment'
+            ),
+        };
 
         try {
             writeFileSync('generated/swagger.json', JSON.stringify(document));
