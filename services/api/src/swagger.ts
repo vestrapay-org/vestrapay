@@ -59,23 +59,7 @@ export default async function (app: NestApplication): Promise<void> {
             deepScanRoutes: true,
         });
 
-        // Only expose endpoints that are ready for frontend consumption
-        const allowedTags = ['modules.public.payment'];
-        const document = {
-            ...fullDocument,
-            paths: Object.fromEntries(
-                Object.entries(fullDocument.paths).filter(([, pathItem]) =>
-                    Object.values(pathItem).some((op: any) =>
-                        op?.tags?.some((tag: string) =>
-                            allowedTags.includes(tag)
-                        )
-                    )
-                )
-            ),
-            tags: (fullDocument.tags ?? []).filter(t =>
-                allowedTags.includes(t.name)
-            ),
-        };
+        const document = fullDocument;
 
         try {
             writeFileSync('generated/swagger.json', JSON.stringify(document));
