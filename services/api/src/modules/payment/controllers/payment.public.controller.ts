@@ -16,6 +16,7 @@ import { RequestIPAddress } from '@common/request/decorators/request.decorator';
 import { PaymentService } from '@modules/payment/services/payment.service';
 import { PaymentChargeCardRequestDto } from '@modules/payment/dtos/request/payment.charge-card.request.dto';
 import { PaymentChargeBankTransferRequestDto } from '@modules/payment/dtos/request/payment.charge-bank-transfer.request.dto';
+import { PaymentChargeBankPaymentRequestDto } from '@modules/payment/dtos/request/payment.charge-bank-payment.request.dto';
 import { PaymentChargeUssdRequestDto } from '@modules/payment/dtos/request/payment.charge-ussd.request.dto';
 import { Payment3dsCompleteRequestDto } from '@modules/payment/dtos/request/payment.3ds-complete.request.dto';
 import { PaymentCompleteUssdRequestDto } from '@modules/payment/dtos/request/payment.complete-ussd.request.dto';
@@ -23,6 +24,7 @@ import { Response as ExpressResponse } from 'express';
 import {
     PaymentPublicChargeCardDoc,
     PaymentPublicChargeBankTransferDoc,
+    PaymentPublicChargeBankPaymentDoc,
     PaymentPublicChargeUssdDoc,
     PaymentPublicComplete3dsDoc,
     PaymentPublicCompleteUssdDoc,
@@ -79,7 +81,10 @@ export class PaymentPublicController {
         const color = result.status === 'success' ? '#22c55e' : '#ef4444';
         res.setHeader('Content-Type', 'text/html');
         res.removeHeader('X-Frame-Options');
-        res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-src *; frame-ancestors *;");
+        res.setHeader(
+            'Content-Security-Policy',
+            "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-src *; frame-ancestors *;"
+        );
         res.send(`
             <!DOCTYPE html>
             <html>
@@ -103,7 +108,10 @@ export class PaymentPublicController {
     @Get('/test-checkout')
     async testCheckout(@Res() res: ExpressResponse) {
         res.setHeader('Content-Type', 'text/html');
-        res.setHeader('Content-Security-Policy', "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-src *;");
+        res.setHeader(
+            'Content-Security-Policy',
+            "default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-src *;"
+        );
         res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -205,6 +213,26 @@ ss(JSON.stringify(d),'e');
     ) {
         return {
             data: await this.paymentService.chargeBankTransfer(body),
+        };
+    }
+
+    @PaymentPublicChargeBankPaymentDoc()
+    @Response('payment.chargeBankPayment')
+    @ApiKeyProtected()
+    @HttpCode(HttpStatus.OK)
+    @Post('/charge/bank-payment')
+    async chargeBankPayment(@Body() body: PaymentChargeBankPaymentRequestDto) {
+        return {
+            data: await this.paymentService.chargeBankPayment(body),
+        };
+    }
+
+    @ApiKeyProtected()
+    @HttpCode(HttpStatus.OK)
+    @Get('/banks/pay-with-bank')
+    async getPayWithBankBanks() {
+        return {
+            data: await this.paymentService.getPayWithBankBanks(),
         };
     }
 

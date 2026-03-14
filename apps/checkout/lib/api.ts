@@ -4,6 +4,8 @@ import type {
   ChargeCardRequest,
   ChargeBankTransferData,
   ChargeBankTransferRequest,
+  ChargeBankPaymentRequest,
+  ChargeBankPaymentData,
   ThreeDsCompleteData,
   ThreeDsCompleteRequest,
   VerifyTransactionData,
@@ -58,6 +60,24 @@ export async function chargeBankTransfer(
   return apiFetch<ApiResponse<ChargeBankTransferData>>(
     "/api/v1/public/payment/charge/bank-transfer",
     { body: req },
+  );
+}
+
+export async function chargeBankPayment(
+  req: ChargeBankPaymentRequest,
+): Promise<ApiResponse<ChargeBankPaymentData>> {
+  return apiFetch<ApiResponse<ChargeBankPaymentData>>(
+    "/api/v1/public/payment/charge/bank-payment",
+    { body: req },
+  );
+}
+
+export async function getBankPaymentBanks(): Promise<
+  ApiResponse<Array<{ code: string; name: string; slug: string }>>
+> {
+  return apiFetch<ApiResponse<Array<{ code: string; name: string; slug: string }>>>(
+    "/api/v1/public/payment/banks/pay-with-bank",
+    { method: "GET" },
   );
 }
 
