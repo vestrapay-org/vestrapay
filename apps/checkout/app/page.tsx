@@ -70,6 +70,7 @@ export default function CheckoutPage(): React.ReactNode {
   );
 
   const [merchant, setMerchant] = useState<Merchant>(MERCHANT);
+  const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -85,20 +86,60 @@ export default function CheckoutPage(): React.ReactNode {
       currency: params.get("currency") ?? MERCHANT.currency,
       reference: params.get("reference") ?? MERCHANT.reference,
     });
+
+    const rawRedirectUrl = params.get("redirect_url");
+    if (rawRedirectUrl) {
+      try {
+        // Validate it's a real URL before storing
+        new URL(rawRedirectUrl);
+        setRedirectUrl(rawRedirectUrl);
+      } catch {
+        // Invalid URL — ignore
+      }
+    }
   }, []);
 
   const formattedAmount = formatCurrency(merchant.amount, merchant.currency);
   const amountInSmallestUnit = toSmallestCurrencyUnit(merchant.amount, merchant.currency);
 
+  const buildRedirectUrl = useCallback(
+    (status: "success" | "failed", reference: string) => {
+      if (!redirectUrl) return null;
+      const url = new URL(redirectUrl);
+      url.searchParams.set("status", status);
+      url.searchParams.set("reference", reference);
+      url.searchParams.set("amount", String(merchant.amount));
+      url.searchParams.set("currency", merchant.currency);
+      return url.toString();
+    },
+    [redirectUrl, merchant.amount, merchant.currency],
+  );
+
   const ActiveComponent = PAYMENT_COMPONENTS[displayMethod];
-  const handlePaymentSuccess = useCallback((reference: string) => {
-    setPaymentSuccess({ reference });
-    setPaymentFailed(null);
-  }, []);
-  const handlePaymentFailed = useCallback((reference: string, errorMsg?: string) => {
-    setPaymentFailed({ reference, errorMsg });
-    setPaymentSuccess(null);
-  }, []);
+  const handlePaymentSuccess = useCallback(
+    (reference: string) => {
+      setPaymentSuccess({ reference });
+      setPaymentFailed(null);
+      const url = buildRedirectUrl("success", reference);
+      if (url)
+        setTimeout(() => {
+          window.location.href = url;
+        }, 2500);
+    },
+    [buildRedirectUrl],
+  );
+  const handlePaymentFailed = useCallback(
+    (reference: string, errorMsg?: string) => {
+      setPaymentFailed({ reference, errorMsg });
+      setPaymentSuccess(null);
+      const url = buildRedirectUrl("failed", reference);
+      if (url)
+        setTimeout(() => {
+          window.location.href = url;
+        }, 2500);
+    },
+    [buildRedirectUrl],
+  );
 
   return (
     <main className="flex min-h-screen items-start justify-center bg-[#f6f9fc] p-0 sm:items-center sm:p-4">
@@ -171,13 +212,19 @@ export default function CheckoutPage(): React.ReactNode {
                     />
                   </div>
                   <p className="mt-5 text-lg font-semibold text-emerald-600">Successful</p>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentSuccess(null)}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 mt-6 h-10 w-full cursor-pointer rounded-lg text-sm font-semibold transition-colors sm:h-11"
-                  >
-                    Make Another Payment
-                  </button>
+                  {redirectUrl ? (
+                    <p className="mt-2 text-sm text-[#6b7c93]">
+                      Redirecting you back to the store…
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentSuccess(null)}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 mt-6 h-10 w-full cursor-pointer rounded-lg text-sm font-semibold transition-colors sm:h-11"
+                    >
+                      Make Another Payment
+                    </button>
+                  )}
                 </div>
               ) : paymentFailed ? (
                 <div className="flex flex-col items-center px-1 py-4 text-center sm:px-0 sm:py-6">
@@ -187,14 +234,20 @@ export default function CheckoutPage(): React.ReactNode {
                       strokeWidth={1.5}
                     />
                   </div>
-                  <p className="mt-5 text-lg font-semibold text-red-500">Error</p>
-                  <button
-                    type="button"
-                    onClick={() => setPaymentFailed(null)}
-                    className="bg-primary text-primary-foreground hover:bg-primary/90 mt-6 h-10 w-full cursor-pointer rounded-lg text-sm font-semibold transition-colors sm:h-11"
-                  >
-                    Try Again
-                  </button>
+                  <p className="mt-5 text-lg font-semibold text-red-500">Payment Failed</p>
+                  {redirectUrl ? (
+                    <p className="mt-2 text-sm text-[#6b7c93]">
+                      Redirecting you back to the store…
+                    </p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setPaymentFailed(null)}
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 mt-6 h-10 w-full cursor-pointer rounded-lg text-sm font-semibold transition-colors sm:h-11"
+                    >
+                      Try Again
+                    </button>
+                  )}
                 </div>
               ) : (
                 <ActiveComponent
