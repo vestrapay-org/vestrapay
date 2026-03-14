@@ -12,6 +12,7 @@ import { EnumPaymentStatusCodeError } from '@modules/payment/enums/payment.statu
 import { PaymentChargeCardRequestDto } from '@modules/payment/dtos/request/payment.charge-card.request.dto';
 import { Payment3dsCompleteRequestDto } from '@modules/payment/dtos/request/payment.3ds-complete.request.dto';
 import { PaymentChargeBankTransferRequestDto } from '@modules/payment/dtos/request/payment.charge-bank-transfer.request.dto';
+import { PaymentChargeBankPaymentRequestDto } from '@modules/payment/dtos/request/payment.charge-bank-payment.request.dto';
 import { PaymentChargeUssdRequestDto } from '@modules/payment/dtos/request/payment.charge-ussd.request.dto';
 import { PaymentCompleteUssdRequestDto } from '@modules/payment/dtos/request/payment.complete-ussd.request.dto';
 import { PaymentChargeCardResponseDto } from '@modules/payment/dtos/response/payment.charge-card.response.dto';
@@ -136,6 +137,35 @@ Creates a transaction and generates a temporary Wema Bank virtual account. The c
         DocRequest({
             bodyType: EnumDocRequestBodyType.json,
             dto: PaymentChargeBankTransferRequestDto,
+        }),
+        DocDefault({
+            httpStatus: HttpStatus.NOT_FOUND,
+            statusCode: EnumPaymentStatusCodeError.merchantNotFound,
+            messagePath: 'payment.error.merchantNotFound',
+        })
+    );
+}
+
+export function PaymentPublicChargeBankPaymentDoc(): MethodDecorator {
+    return applyDecorators(
+        Doc({
+            summary: 'Charge via pay-with-bank (Korapay)',
+            description: `
+Initiates a pay-with-bank charge via Korapay. The customer is redirected to their bank app to authorize the debit.
+
+**Flow:**
+1. Call \`GET /banks/pay-with-bank\` to get supported bank codes.
+2. Call this endpoint with amount, email, and bankCode.
+3. Redirect the customer to the returned \`redirectUrl\` to complete authorization.
+4. Korapay sends a webhook when payment is confirmed, or poll \`GET /verify/:reference\`.
+
+**Amount:** Always the smallest currency unit — ₦1,000 = \`100000\` (kobo).
+            `.trim(),
+        }),
+        DocAuth({ xApiKey: true }),
+        DocRequest({
+            bodyType: EnumDocRequestBodyType.json,
+            dto: PaymentChargeBankPaymentRequestDto,
         }),
         DocDefault({
             httpStatus: HttpStatus.NOT_FOUND,
