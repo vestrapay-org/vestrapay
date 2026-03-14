@@ -12,6 +12,7 @@ import { PaymentUtil } from '@modules/payment/utils/payment.util';
 import {
     ALATPAY_BANK_TRANSFER_PROCESSOR,
     BANK_TRANSFER_PROCESSOR,
+    BANK_PAYMENT_PROCESSOR,
     CARD_PROCESSOR,
     KORAPAY_BANK_TRANSFER_PROCESSOR,
     USSD_PROCESSOR,
@@ -22,6 +23,7 @@ import { IUssdProcessor } from '@modules/processor/interfaces/ussd-processor.int
 import { EnumPaymentStatusCodeError } from '@modules/payment/enums/payment.status-code.enum';
 import { PaymentChargeCardRequestDto } from '@modules/payment/dtos/request/payment.charge-card.request.dto';
 import { PaymentChargeBankTransferRequestDto } from '@modules/payment/dtos/request/payment.charge-bank-transfer.request.dto';
+import { PaymentChargeBankPaymentRequestDto } from '@modules/payment/dtos/request/payment.charge-bank-payment.request.dto';
 import { PaymentChargeUssdRequestDto } from '@modules/payment/dtos/request/payment.charge-ussd.request.dto';
 
 @Injectable()
@@ -44,6 +46,8 @@ export class PaymentService {
         private readonly alatpayBankTransfer: IBankTransferProcessor,
         @Inject(KORAPAY_BANK_TRANSFER_PROCESSOR)
         private readonly korapayBankTransfer: IBankTransferProcessor,
+        @Inject(BANK_PAYMENT_PROCESSOR)
+        private readonly bankPaymentProcessor: IBankTransferProcessor,
         @Inject(USSD_PROCESSOR)
         private readonly ussdProcessor: IUssdProcessor
     ) {
@@ -53,8 +57,7 @@ export class PaymentService {
         ).replace(/\/+$/, '');
         this.redirectResponseUrl = `${baseUrl}/api/v1/public/payment/3ds-callback`;
         this.cardProviderName =
-            this.configService.get<string>('payment.providers.card') ??
-            'mpgs';
+            this.configService.get<string>('payment.providers.card') ?? 'mpgs';
         this.bankTransferProviderName =
             this.configService.get<string>('payment.providers.bankTransfer') ??
             'alatpay';
@@ -293,6 +296,96 @@ export class PaymentService {
         };
     }
 
+    async chargeBankPayment(dto: PaymentChargeBankPaymentRequestDto): Promise<{
+        status: string;
+        transactionReference: string;
+        paymentReference: string;
+        amount: number;
+        currency: string;
+        fee: number;
+        redirectUrl: string;
+        bankName: string;
+    }> {
+        const merchant = await this.paymentRepository.findDefaultMerchant();
+        if (!merchant) {
+            throw new NotFoundException({
+                statusCode: EnumPaymentStatusCodeError.merchantNotFound,
+                message: 'payment.error.merchantNotFound',
+            });
+        }
+
+        const reference = this.paymentUtil.generateReference();
+        const currency = dto.currency ?? 'NGN';
+
+        const transaction = await this.paymentRepository.createTransaction({
+            merchantId: merchant.id,
+            reference,
+            amount: dto.amount,
+            currency,
+            email: dto.email,
+            description: dto.description,
+        });
+
+        this.logger.log(
+            `Bank payment charge started: ${reference} for ${dto.amount} ${currency}`
+        );
+
+        const bankPayment =
+            await this.bankPaymentProcessor.createVirtualAccount({
+                amount: dto.amount,
+                currency,
+                customerEmail: dto.email,
+                customerName: dto.customerName,
+                reference,
+                bankCode: dto.bankCode,
+                redirectUrl: dto.redirectUrl,
+                merchantBearsCost: dto.merchantBearsCost,
+            });
+
+        const fees = this.paymentUtil.calculateTransferInflowFee(dto.amount);
+
+        await this.paymentRepository.updateTransaction(transaction.id, {
+            channel: EnumTransactionChannel.bank_transfer,
+            status: EnumTransactionStatus.processing,
+            processorChannel: 'korapay',
+            processorReference: bankPayment.providerReference,
+            fees,
+            bankTransferAccountNumber: bankPayment.accountNumber,
+            bankTransferBankName: bankPayment.bankName,
+            bankTransferExpiresAt: new Date(Date.now() + 30 * 60 * 1000), // 30 minutes
+        });
+
+        return {
+            status: 'processing',
+            transactionReference: bankPayment.providerReference ?? '',
+            paymentReference: reference,
+            amount: dto.amount,
+            currency,
+            fee: fees,
+            redirectUrl: bankPayment.redirectUrl ?? '',
+            bankName: bankPayment.bankName,
+        };
+    }
+
+    async getPayWithBankBanks(): Promise<
+        Array<{ code: string; name: string; slug: string }>
+    > {
+        // Return hardcoded list of supported banks for Korapay Pay with Bank
+        // These are the banks currently supported by Korapay for pay-with-bank feature
+        return [
+            {
+                code: '100004',
+                name: 'Opay',
+                slug: 'opay',
+            },
+            {
+                code: '100033',
+                name: 'Palmpay',
+                slug: 'palmpay',
+            },
+        ];
+    }
+
     async chargeUssd(dto: PaymentChargeUssdRequestDto): Promise<{
         status: string;
         reference: string;
@@ -381,16 +474,25 @@ export class PaymentService {
 
         // Still processing — check real status from the payment processor
         const verifiableProviders = ['alatpay', 'korapay'];
-        if (transaction.processorChannel && verifiableProviders.includes(transaction.processorChannel)) {
+        if (
+            transaction.processorChannel &&
+            verifiableProviders.includes(transaction.processorChannel)
+        ) {
             try {
                 let remoteStatus: 'success' | 'pending' | 'failed' = 'pending';
 
-                if (transaction.channel === EnumTransactionChannel.bank_transfer) {
-                    const result = await this.bankTransferProcessor.verifyPayment(
-                        transaction.processorReference ?? transaction.reference
-                    );
+                if (
+                    transaction.channel === EnumTransactionChannel.bank_transfer
+                ) {
+                    const result =
+                        await this.bankTransferProcessor.verifyPayment(
+                            transaction.processorReference ??
+                                transaction.reference
+                        );
                     remoteStatus = result.status;
-                } else if (transaction.channel === EnumTransactionChannel.ussd) {
+                } else if (
+                    transaction.channel === EnumTransactionChannel.ussd
+                ) {
                     const result = await this.ussdProcessor.verifyCharge(
                         transaction.processorReference ?? transaction.reference
                     );
@@ -399,24 +501,37 @@ export class PaymentService {
 
                 const provider = transaction.processorChannel;
                 if (remoteStatus === 'success') {
-                    await this.paymentRepository.updateTransaction(transaction.id, {
-                        status: EnumTransactionStatus.success,
-                        paidAt: new Date(),
-                        gatewayResponse: `Verified via ${provider} API`,
-                    });
-                    this.logger.log(`Payment verified via ${provider}: ${reference}`);
+                    await this.paymentRepository.updateTransaction(
+                        transaction.id,
+                        {
+                            status: EnumTransactionStatus.success,
+                            paidAt: new Date(),
+                            gatewayResponse: `Verified via ${provider} API`,
+                        }
+                    );
+                    this.logger.log(
+                        `Payment verified via ${provider}: ${reference}`
+                    );
                 } else if (remoteStatus === 'failed') {
-                    await this.paymentRepository.updateTransaction(transaction.id, {
-                        status: EnumTransactionStatus.failed,
-                        failedAt: new Date(),
-                        gatewayResponse: `Failed (verified via ${provider} API)`,
-                    });
-                    this.logger.warn(`Payment failed via ${provider}: ${reference}`);
+                    await this.paymentRepository.updateTransaction(
+                        transaction.id,
+                        {
+                            status: EnumTransactionStatus.failed,
+                            failedAt: new Date(),
+                            gatewayResponse: `Failed (verified via ${provider} API)`,
+                        }
+                    );
+                    this.logger.warn(
+                        `Payment failed via ${provider}: ${reference}`
+                    );
                 }
 
                 // Re-read to get updated values
                 if (remoteStatus !== 'pending') {
-                    transaction = (await this.paymentRepository.findTransactionByReference(reference))!;
+                    transaction =
+                        (await this.paymentRepository.findTransactionByReference(
+                            reference
+                        ))!;
                 }
             } catch (error: unknown) {
                 this.logger.warn(
@@ -500,8 +615,10 @@ export class PaymentService {
         payload: Record<string, unknown>,
         headers: Record<string, string>
     ): Promise<void> {
-        const event =
-            await this.alatpayBankTransfer.validateWebhook(payload, headers);
+        const event = await this.alatpayBankTransfer.validateWebhook(
+            payload,
+            headers
+        );
 
         if (event.eventType === 'payin.received' && event.reference) {
             await this.paymentRepository.updateTransactionByReference(
@@ -511,7 +628,8 @@ export class PaymentService {
                     paidAt: new Date(),
                     processorReference: event.paymentId,
                     processorResponse: event.raw,
-                    gatewayResponse: 'Payment received via AlatPay bank transfer',
+                    gatewayResponse:
+                        'Payment received via AlatPay bank transfer',
                 }
             );
             this.logger.log(
@@ -524,8 +642,10 @@ export class PaymentService {
         payload: Record<string, unknown>,
         headers: Record<string, string>
     ): Promise<void> {
-        const event =
-            await this.korapayBankTransfer.validateWebhook(payload, headers);
+        const event = await this.korapayBankTransfer.validateWebhook(
+            payload,
+            headers
+        );
 
         if (event.eventType === 'charge.success' && event.reference) {
             await this.paymentRepository.updateTransactionByReference(
@@ -535,7 +655,8 @@ export class PaymentService {
                     paidAt: new Date(),
                     processorReference: event.paymentId,
                     processorResponse: event.raw,
-                    gatewayResponse: 'Payment received via Korapay bank transfer',
+                    gatewayResponse:
+                        'Payment received via Korapay bank transfer',
                 }
             );
             this.logger.log(
@@ -553,6 +674,46 @@ export class PaymentService {
             );
             this.logger.warn(
                 `Korapay payment failed for reference: ${event.reference}`
+            );
+        }
+    }
+
+    async handleKorapayBankPaymentWebhook(
+        payload: Record<string, unknown>,
+        headers: Record<string, string>
+    ): Promise<void> {
+        const event = await this.bankPaymentProcessor.validateWebhook(
+            payload,
+            headers
+        );
+
+        if (event.status === 'success' && event.reference) {
+            await this.paymentRepository.updateTransactionByReference(
+                event.reference,
+                {
+                    status: EnumTransactionStatus.success,
+                    paidAt: new Date(),
+                    processorReference: event.paymentId,
+                    processorResponse: event.raw,
+                    gatewayResponse:
+                        'Payment received via Korapay bank payment',
+                }
+            );
+            this.logger.log(
+                `Korapay bank payment confirmed for reference: ${event.reference}`
+            );
+        } else if (event.status === 'failed' && event.reference) {
+            await this.paymentRepository.updateTransactionByReference(
+                event.reference,
+                {
+                    status: EnumTransactionStatus.failed,
+                    failedAt: new Date(),
+                    processorResponse: event.raw,
+                    gatewayResponse: 'Payment failed via Korapay bank payment',
+                }
+            );
+            this.logger.warn(
+                `Korapay bank payment failed for reference: ${event.reference}`
             );
         }
     }
@@ -624,8 +785,10 @@ export class PaymentService {
                 paidAt: new Date(),
                 fees,
                 processorReference: payResult.transactionReference,
-                processorResponse:
-                    payResult.processorResponse as Record<string, unknown>,
+                processorResponse: payResult.processorResponse as Record<
+                    string,
+                    unknown
+                >,
                 gatewayResponse: payResult.gatewayCode,
             });
 
@@ -637,10 +800,11 @@ export class PaymentService {
             status: EnumTransactionStatus.failed,
             failedAt: new Date(),
             processorReference: payResult.transactionReference,
-            processorResponse:
-                payResult.processorResponse as Record<string, unknown>,
-            gatewayResponse:
-                payResult.gatewayCode ?? payResult.status,
+            processorResponse: payResult.processorResponse as Record<
+                string,
+                unknown
+            >,
+            gatewayResponse: payResult.gatewayCode ?? payResult.status,
         });
 
         this.logger.warn(`Payment failed: ${reference}`);

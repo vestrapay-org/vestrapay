@@ -5,7 +5,6 @@ export interface ICardData {
     cvv: string;
     expiryMonth: string;
     expiryYear: string;
-
 }
 
 export interface ICreateSessionResult {
@@ -83,6 +82,9 @@ export interface IVirtualAccountParams {
     customerEmail: string;
     reference: string;
     customerName?: string;
+    bankCode?: string; // For Korapay pay-with-bank
+    redirectUrl?: string; // For Korapay pay-with-bank redirect
+    merchantBearsCost?: boolean; // For Korapay pay-with-bank fee handling
 }
 
 export interface IVirtualAccountResult {
@@ -92,6 +94,7 @@ export interface IVirtualAccountResult {
     accountName: string;
     expiresAt: Date;
     providerReference?: string;
+    redirectUrl?: string; // For redirect-based payment methods
 }
 
 export interface IVerifyPaymentResult {

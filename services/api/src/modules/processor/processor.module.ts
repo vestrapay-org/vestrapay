@@ -3,8 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import {
     ALATPAY_BANK_TRANSFER_PROCESSOR,
     BANK_TRANSFER_PROCESSOR,
+    BANK_PAYMENT_PROCESSOR,
     CARD_PROCESSOR,
     KORAPAY_BANK_TRANSFER_PROCESSOR,
+    KORAPAY_BANK_PAYMENT_PROCESSOR,
     KORAPAY_CARD_PROCESSOR,
     MPGS_CARD_PROCESSOR,
     USSD_PROCESSOR,
@@ -13,6 +15,7 @@ import { MpgsCardAdapter } from '@modules/processor/adapters/mpgs/mpgs-card.adap
 import { AlatpayBankTransferAdapter } from '@modules/processor/adapters/alatpay/alatpay-bank-transfer.adapter';
 import { AlatpayUssdAdapter } from '@modules/processor/adapters/alatpay/alatpay-ussd.adapter';
 import { KorapayBankTransferAdapter } from '@modules/processor/adapters/korapay/korapay-bank-transfer.adapter';
+import { KorapayBankPaymentAdapter } from '@modules/processor/adapters/korapay/korapay-bank-payment.adapter';
 import { KorapayCardAdapter } from '@modules/processor/adapters/korapay/korapay-card.adapter';
 import { ICardProcessor } from '@modules/processor/interfaces/card-processor.interface';
 import { IBankTransferProcessor } from '@modules/processor/interfaces/bank-transfer-processor.interface';
@@ -38,7 +41,11 @@ import { IBankTransferProcessor } from '@modules/processor/interfaces/bank-trans
                 config.get('payment.providers.card') === 'korapay'
                     ? korapay
                     : mpgs,
-            inject: [ConfigService, MPGS_CARD_PROCESSOR, KORAPAY_CARD_PROCESSOR],
+            inject: [
+                ConfigService,
+                MPGS_CARD_PROCESSOR,
+                KORAPAY_CARD_PROCESSOR,
+            ],
         },
         {
             provide: ALATPAY_BANK_TRANSFER_PROCESSOR,
@@ -65,6 +72,18 @@ import { IBankTransferProcessor } from '@modules/processor/interfaces/bank-trans
             ],
         },
         {
+            provide: KORAPAY_BANK_PAYMENT_PROCESSOR,
+            useClass: KorapayBankPaymentAdapter,
+        },
+        {
+            provide: BANK_PAYMENT_PROCESSOR,
+            useFactory: (
+                config: ConfigService,
+                korapay: IBankTransferProcessor
+            ) => korapay,
+            inject: [ConfigService, KORAPAY_BANK_PAYMENT_PROCESSOR],
+        },
+        {
             provide: USSD_PROCESSOR,
             useClass: AlatpayUssdAdapter,
         },
@@ -74,8 +93,10 @@ import { IBankTransferProcessor } from '@modules/processor/interfaces/bank-trans
         MPGS_CARD_PROCESSOR,
         KORAPAY_CARD_PROCESSOR,
         BANK_TRANSFER_PROCESSOR,
+        BANK_PAYMENT_PROCESSOR,
         ALATPAY_BANK_TRANSFER_PROCESSOR,
         KORAPAY_BANK_TRANSFER_PROCESSOR,
+        KORAPAY_BANK_PAYMENT_PROCESSOR,
         USSD_PROCESSOR,
     ],
 })

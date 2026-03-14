@@ -102,6 +102,27 @@ export interface ChargeBankTransferData {
   readonly expiresAt: string;
 }
 
+export interface ChargeBankPaymentRequest {
+  readonly amount: number;
+  readonly currency: string;
+  readonly email: string;
+  readonly bankCode: string;
+  readonly description?: string;
+  readonly redirectUrl?: string;
+  readonly merchantBearsCost?: boolean;
+}
+
+export interface ChargeBankPaymentData {
+  readonly status: string;
+  readonly transactionReference: string;
+  readonly paymentReference: string;
+  readonly amount: number;
+  readonly currency: string;
+  readonly fee: number;
+  readonly redirectUrl: string;
+  readonly bankName: string;
+}
+
 export type VerifyTransactionStatus = "pending" | "processing" | "success" | "failed";
 
 export interface VerifyTransactionData {
